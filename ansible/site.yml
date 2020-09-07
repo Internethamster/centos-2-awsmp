@@ -1,0 +1,63 @@
+---
+  #  ;;; -*- yaml-mode -*-
+- name: Build and deploy infrastructure for copying and updating the 2P Listings for OS partners
+  hosts:
+    localhost
+  connection: local
+
+  vars:
+    stage: devel
+    vpcId: vpc-beb418d5
+    subnetId: subnet-bb9b99c1
+    amiId: ami-00004f98e29b46916
+    arch: x86_64
+    boto_profile: image-builder
+    aws_instance_role: jenkins-ec2-role
+    aws_instance_type: m5.large
+    aws_region: us-east-2
+      
+
+  tasks:
+    - name: TEst the instance type
+      debug:
+        var: amiId
+
+    - name: Get the AMI for CentOS
+      ec2_ami_info:
+        architecture: "{{ arch }}"
+        region: "aws_region"
+        filters:
+          owner-id: 125523088429
+          is-public: true
+          name: "CentOS 7.8*"
+        profile: "{{ boto_profile }}"
+        
+    - name: Build the instance required for Jenkins
+      ec2_instance:
+        vpc_subnet_id: "{{ subnetId }}"
+        image_id: "{{ amiId }}"
+        instance_role: "{{ aws_instance_role }}"
+        instance_type: "{{ aws_instance_type }}"
+        user_data: "{{ lookup('file', 'files/jenkins-instance-userdata.yml') }}"
+        name: jenkins-builder
+        profile: "{{ boto_profile }}"
+        region:  "{{ aws_region }}"
+        security_group: "launch-wizard-1"
+        state: present
+        tags:
+          task: image-builder
+          stage: deployment
+          purpose: jenkins
+        volumes:
+          - device_name: /dev/sda1
+            ebs:
+              volume_size: 16
+              delete_on_termination: true
+      register: jenkins_host
+    - name:
+      debug:
+        var: jenkins_host
+      
+      
+      
+  
