@@ -3,9 +3,7 @@ pipeline {
   stages {
     stage('Retrieve Images') {
       steps {
-        sh '''#!/bin/bash
-set -euo pipefail
-RELEASE=${BUILD_RELEASE}
+        sh '''RELEASE=${BUILD_RELEASE}
 DATE=$(date +%Y%m%d)
 REGION=${AWS_REGION}
 SUBNET_ID=${AWS_SUBNET_ID}
