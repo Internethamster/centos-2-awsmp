@@ -1,5 +1,5 @@
 pipeline {
-  agent any
+  agent none
   stages {
     stage('Retrieve Images') {
       steps {
@@ -95,5 +95,6 @@ aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageI
   environment {
     AWS_REGION = 'us-east-2'
     BUILD_RELEASE = '1'
+    AWS_SUBNET_ID = 'subnet-4c04d804'
   }
 }
