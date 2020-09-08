@@ -5,10 +5,10 @@ pipeline {
       steps {
         sh '''#!/bin/bash
 set -euo pipefail
-RELEASE=$1
+RELEASE=${BUILD_RELEASE}
 DATE=$(date +%Y%m%d)
-REGION=us-west-2
-SUBNET_ID=subnet-4c04d804
+REGION=${AWS_REGION}
+SUBNET_ID=${AWS_SUBNET_ID}
 SECURITY_GROUP_ID=sg-05965678
 DRY_RUN="--dry-run"
 NAME="CentOS-8-ec2-8.2.2004"
