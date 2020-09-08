@@ -1,0 +1,9 @@
+stage: devel
+vpcId: vpc-beb418d5
+subnetId: subnet-bb9b99c1
+amiId: ami-00004f98e29b46916
+arch: arm64
+boto_profile: image-builder
+aws_instance_role: jenkins-ec2-role
+aws_instance_type: m6g.large
+aws_region: us-east-2

@@ -6,5 +6,5 @@
 *.elc
 auto-save-list
 tramp
-.\#*
+*.\#*
 ansible/roles/geerlingguy*

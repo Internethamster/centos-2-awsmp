@@ -1,0 +1,8 @@
+--- 
+collections:
+  - name: community.aws
+  - name: amazon.aws
+
+roles:
+  - name: geerlingguy.java
+  - name: geerlingguy.jenkins

@@ -1,4 +1,4 @@
----
+--- 
 - name: Build and deploy infrastructure for copying and updating the 2P Listings for OS partners
   hosts:
     localhost
@@ -30,6 +30,7 @@
 
     - name: Get the AMI for CentOS
       ec2_ami_info:
+        owners: "{{ ami.owner_id }}"
         region: "{{ aws_region }}"
         filters:          
           name: "{{ ami.Name }}"
@@ -53,6 +54,7 @@
         profile: "{{ boto_profile }}"
         region:  "{{ aws_region }}"
         security_group: "launch-wizard-1"
+        wait: true
         tags:
           task: image-builder
           stage: deployment
@@ -64,42 +66,29 @@
               delete_on_termination: true
       register: jenkins_host
 
-- name:
+- name: Add the jenkins installation to the jenkins instance
   hosts: tag_purpose_jenkins
   become: true
-    
-  tasks:
-    
-  - name: Install Corretto Repository
-    yum_repository:
-      name: corretto
-      description: Amazon Corretto
-      baseurl: https://yum.corretto.aws/$basearch
-      gpgkey: https://yum.corretto.aws/corretto.key
-      enabled: yes
-      gpgcheck: true
-
-  - name: Install Jenkins LTS release
-    yum_repository:
-      name: jenkins
-      description: Jenkins-stable
-      baseurl: http://pkg.jenkins.io/redhat-stable
-      gpgkey: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
-      enabled: yes
-      gpgcheck: true
-
-  - name: Add the rpm key for corretto
-    rpm_key:
-      state: present
-      key: https://yum.corretto.aws/corretto.key
-
-  - name: add the rpm key for Jenkins repo
-    rpm_key:
-      state: present
-      key: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
-
-  - name: Install the java and the jenkins rpms
-    yum:
-      name:
-        - java-11-amazon-corretto-devel-11.0.7.10-1
-        - jenkins
+  
+  vars:
+    jenkins_package_state: latest
+    jenkins_hostname: "{{ inventory_hostname }}"
+    jenkins_http_port: 8443
+    jenkins_admin_username: admin
+    jenkins_admin_password: "{{ input_admin_pass }}"
+    jenkins_plugins:
+      - blueocean
+    jenkins_plugins_install_dependencies: true
+    jenkins_plugins_state: latest
+    jenkins_prefer_lts: false
+    jenkins_java_options: "-Djenkins.install.runSetupWizard=false"
+    java_packages:
+      - openjdk-8-jdk
+    no_log: false
+      
+  roles:
+    - role: geerlingguy.java
+      when: "ansible_os_family == 'RedHat'"
+      java_packages:
+        - java-1.8.0-openjdk      
+    - geerlingguy.jenkins
