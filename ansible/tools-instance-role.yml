@@ -1,0 +1,9 @@
+- name: Build a series of roles for deployment support
+  hosts:
+    localhost
+
+  tasks:
+  - name: Build a supporting Role for tools instance in the account
+    debug:
+      msg: TODO
+

@@ -1,5 +1,4 @@
 ---
-  #  ;;; -*- yaml-mode -*-
 - name: Build and deploy infrastructure for copying and updating the 2P Listings for OS partners
   hosts:
     localhost
@@ -9,7 +8,10 @@
     stage: devel
     vpcId: vpc-beb418d5
     subnetId: subnet-bb9b99c1
-    amiId: ami-00004f98e29b46916
+    ami:
+      Id: ami-0a75b786d9a7f8144
+      Name: "CentOS 7.8.*"
+      owner_id: "125523088429"
     arch: x86_64
     boto_profile: image-builder
     aws_instance_role: jenkins-ec2-role
@@ -18,24 +20,32 @@
       
 
   tasks:
-    - name: TEst the instance type
+    - name: Add security group configuration for isntance.
       debug:
-        var: amiId
+        msg: "Add dynamic security group - TODO"
+
+    - name: Review information from the AMI config
+      debug:
+        msg: "ID is {{ ami.Id }} and NAME is {{ ami.Name }} and the owner is {{ ami.owner_id }}"
 
     - name: Get the AMI for CentOS
       ec2_ami_info:
-        architecture: "{{ arch }}"
-        region: "aws_region"
-        filters:
-          owner-id: 125523088429
-          is-public: true
-          name: "CentOS 7.8*"
+        region: "{{ aws_region }}"
+        filters:          
+          name: "{{ ami.Name }}"
+          architecture: "{{ arch }}"
         profile: "{{ boto_profile }}"
+      register: centos_images
+
+    - name: Report the images
+      debug:
+        var: centos_images
+        
         
     - name: Build the instance required for Jenkins
       ec2_instance:
         vpc_subnet_id: "{{ subnetId }}"
-        image_id: "{{ amiId }}"
+        image_id: "{{ ami.Id }}"
         instance_role: "{{ aws_instance_role }}"
         instance_type: "{{ aws_instance_type }}"
         user_data: "{{ lookup('file', 'files/jenkins-instance-userdata.yml') }}"
@@ -43,7 +53,6 @@
         profile: "{{ boto_profile }}"
         region:  "{{ aws_region }}"
         security_group: "launch-wizard-1"
-        state: present
         tags:
           task: image-builder
           stage: deployment
@@ -54,10 +63,43 @@
               volume_size: 16
               delete_on_termination: true
       register: jenkins_host
-    - name:
-      debug:
-        var: jenkins_host
-      
-      
-      
-  
+
+- name:
+  hosts: tag_purpose_jenkins
+  become: true
+    
+  tasks:
+    
+  - name: Install Corretto Repository
+    yum_repository:
+      name: corretto
+      description: Amazon Corretto
+      baseurl: https://yum.corretto.aws/$basearch
+      gpgkey: https://yum.corretto.aws/corretto.key
+      enabled: yes
+      gpgcheck: true
+
+  - name: Install Jenkins LTS release
+    yum_repository:
+      name: jenkins
+      description: Jenkins-stable
+      baseurl: http://pkg.jenkins.io/redhat-stable
+      gpgkey: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+      enabled: yes
+      gpgcheck: true
+
+  - name: Add the rpm key for corretto
+    rpm_key:
+      state: present
+      key: https://yum.corretto.aws/corretto.key
+
+  - name: add the rpm key for Jenkins repo
+    rpm_key:
+      state: present
+      key: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+
+  - name: Install the java and the jenkins rpms
+    yum:
+      name:
+        - java-11-amazon-corretto-devel-11.0.7.10-1
+        - jenkins
