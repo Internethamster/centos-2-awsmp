@@ -1,5 +1,7 @@
 # -*- mode: gitignore; -*-
 *~
+*.raw
+*.qcow2
 \#*\#
 /.emacs.desktop
 /.emacs.desktop.lock

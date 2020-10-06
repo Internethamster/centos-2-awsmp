@@ -25,16 +25,16 @@ function err() {
 
 curl -C - -o ${NAME}-${ARCHITECTURE}.qcow2 http://cloud.centos.org/centos/8/${ARCH}/images/${NAME}-20200611.2.${ARCH}.qcow2
 
-err "$LINK retrieved and saved at $(pwd)/${NAME}-${ARCH}.qcow2"
+err "$LINK retrieved and saved at $(pwd)/${NAME}-${ARCHITECTURE}.qcow2"
 
-err "$NAME-${DATE}-${RELEASE}.$ARCH.raw created" 
+err "$NAME-${DATE}-${RELEASE}.${ARCHITECTURE}.raw created" 
 qemu-img convert \
 	 ./${NAME}-${ARCHITECTURE}.qcow2 ${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw
 
-err "Modified ./${NAME}-${DATE}-${RELEASE}.${ARCH}.raw to make it permissive"
+err "Modified ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw to make it permissive"
 virt-edit ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 
-err "virt-customize -a ./${NAME}-${DATE}-${RELEASE}.${ARCH}.raw  --update --install cloud-init"
+err "virt-customize -a ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw  --update --install cloud-init"
 virt-customize -a ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw  --update --install cloud-init
 
 # virt-edit ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw  /etc/cloud/cloud.cfg -e "s/name: centos/name: ec2-user/"
@@ -75,7 +75,7 @@ err $DEVICE_MAPPINGS
 
 ImageId=$(aws ec2 register-image --region $REGION --architecture=x86_64 \
 	      --description='CentOS 8.2.2004 (x86_64) for HVM Instances' --virtualization-type hvm  \
-	      --root-device-name '/dev/sda1'     --name=${NAME}-${DATE}-${RELEASE}.$ARCHITECTURE     --ena-support --sriov-net-support simple \
+	      --root-device-name '/dev/sda1'     --name=${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}     --ena-support --sriov-net-support simple \
 	      --block-device-mappings "${DEVICE_MAPPINGS}" \
 	      --output text)
 
