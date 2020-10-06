@@ -23,34 +23,34 @@ function err() {
 
 
 
-curl -C - -o ${NAME}-${ARCH}.qcow2 http://cloud.centos.org/centos/8/${ARCH}/images/${NAME}-20200611.2.${ARCH}.qcow2
+curl -C - -o ${NAME}-${ARCHITECTURE}.qcow2 http://cloud.centos.org/centos/8/${ARCH}/images/${NAME}-20200611.2.${ARCH}.qcow2
 
 err "$LINK retrieved and saved at $(pwd)/${NAME}-${ARCH}.qcow2"
 
 err "$NAME-${DATE}-${RELEASE}.$ARCH.raw created" 
 qemu-img convert \
-	 ./${NAME}-${ARCH}.qcow2 ${NAME}-${DATE}-${RELEASE}.${ARCH}.raw
+	 ./${NAME}-${ARCHITECTURE}.qcow2 ${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw
 
 err "Modified ./${NAME}-${DATE}-${RELEASE}.${ARCH}.raw to make it permissive"
-virt-edit ./${NAME}-${DATE}-${RELEASE}.${ARCH}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
+virt-edit ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 
 err "virt-customize -a ./${NAME}-${DATE}-${RELEASE}.${ARCH}.raw  --update --install cloud-init"
-virt-customize -a ./${NAME}-${DATE}-${RELEASE}.${ARCH}.raw  --update --install cloud-init
+virt-customize -a ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw  --update --install cloud-init
 
-# virt-edit ./${NAME}-${DATE}-${RELEASE}.${ARCH}.raw  /etc/cloud/cloud.cfg -e "s/name: centos/name: ec2-user/"
+# virt-edit ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw  /etc/cloud/cloud.cfg -e "s/name: centos/name: ec2-user/"
 # err "Modified Image to move centos to ec2-user"
 
-err "virt-customize -a ./${NAME}-${DATE}-${RELEASE}.${ARCH}.raw --selinux relabel" 
-virt-customize -a ./${NAME}-${DATE}-${RELEASE}.${ARCH}.raw --selinux-relabel
+err "virt-customize -a ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw --selinux relabel" 
+virt-customize -a ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw --selinux-relabel
 
-err "upgrading the current packages for the instance: ${NAME}-${DATE}-${RELEASE}.${ARCH}"
-virt-sysprep -a ./${NAME}-${DATE}-${RELEASE}.${ARCH}.raw
+err "upgrading the current packages for the instance: ${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}"
+virt-sysprep -a ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw
 
 err "Cleaned up the volume in preparation for the AWS Marketplace"
-err "Upload ${NAME}-${DATE}-${RELEASE}.${ARCH}.raw image to S3://aws-marketplace-upload-centos/disk-images/"
-aws s3 cp ./${NAME}-${DATE}-${RELEASE}.${ARCH}.raw  s3://aws-marketplace-upload-centos/disk-images/
+err "Upload ${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw image to S3://aws-marketplace-upload-centos/disk-images/"
+aws s3 cp ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw  s3://aws-marketplace-upload-centos/disk-images/
 
-DISK_CONTAINER="Description=${IMAGE},Format=raw,UserBucket={S3Bucket=aws-marketplace-upload-centos,S3Key=disk-images/${NAME}-${DATE}-${RELEASE}.${ARCH}.raw}"
+DISK_CONTAINER="Description=${IMAGE},Format=raw,UserBucket={S3Bucket=aws-marketplace-upload-centos,S3Key=disk-images/${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw}"
 IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${NAME}-$(date +%s) --description "Import Base CentOS8 X86_64 Image" --disk-container $DISK_CONTAINER)
 err "snapshot suceessfully imported to $IMPORT_SNAP"
 
@@ -75,7 +75,7 @@ err $DEVICE_MAPPINGS
 
 ImageId=$(aws ec2 register-image --region $REGION --architecture=x86_64 \
 	      --description='CentOS 8.2.2004 (x86_64) for HVM Instances' --virtualization-type hvm  \
-	      --root-device-name '/dev/sda1'     --name=${NAME}-${DATE}-${RELEASE}.$ARCH     --ena-support --sriov-net-support simple \
+	      --root-device-name '/dev/sda1'     --name=${NAME}-${DATE}-${RELEASE}.$ARCHITECTURE     --ena-support --sriov-net-support simple \
 	      --block-device-mappings "${DEVICE_MAPPINGS}" \
 	      --output text)
 
@@ -83,7 +83,7 @@ err "Produced Image ID $ImageId"
 
 err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m5.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
 aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m5.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
-    rm -f ./${NAME}-${DATE}-${RELEASE}.${ARCH}.raw
+    rm -f ./${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw
 
 # Share AMI with AWS Marketplace
 aws ec2 modify-snapshot-attribute \
