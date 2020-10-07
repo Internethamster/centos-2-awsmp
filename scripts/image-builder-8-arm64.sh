@@ -27,10 +27,11 @@ curl -C - -o ${NAME}-${ARCHITECTURE}.qcow2 http://cloud.centos.org/centos/8/${AR
 
 err "$LINK retrieved and saved at $(pwd)/${NAME}-${ARCHITECTURE}.qcow2"
 
-RAW_DISK_NAME="${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}.raw"
-err "$RAW_DISK_NAME created" 
-qemu-img convert \
+RAW_DISK_NAME="${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}" # Do not include the extension
+err "$RAW_DISK_NAME create begins"
+qemu-img convert -p \
 	 ./${NAME}-${ARCHITECTURE}.qcow2 ${RAW_DISK_NAME}.raw
+err "$RAW_DISK_NAME create complete"
 
 err "Modified ./${RAW_DISK_NAME}.raw to make it permissive"
 virt-edit ./${RAW_DISK_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
@@ -76,9 +77,12 @@ err $DEVICE_MAPPINGS
 
 ImageId=$(aws ec2 register-image --region $REGION --architecture=x86_64 \
 	      --description='CentOS 8.2.2004 (x86_64) for HVM Instances' --virtualization-type hvm  \
-	      --root-device-name '/dev/sda1'     --name=${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}     --ena-support --sriov-net-support simple \
+	      --root-device-name '/dev/sda1' \
+	      --name=${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE} \
+	      --ena-support --sriov-net-support simple \
 	      --block-device-mappings "${DEVICE_MAPPINGS}" \
-	      --output text)
+	      --output text
+	  )
 
 err "Produced Image ID $ImageId"
 
