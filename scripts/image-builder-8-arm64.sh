@@ -50,22 +50,22 @@ virt-sysprep -a ./${RAW_DISK_NAME}.raw
 
 err "Cleaned up the volume in preparation for the AWS Marketplace"
 err "Upload ${RAW_DISK_NAME}.raw image to S3://aws-marketplace-upload-centos/disk-images/"
-aws s3 cp ./${RAW_DISK_NAME}.raw  s3://aws-marketplace-upload-centos/disk-images/
+aws --region $REGION s3 cp ./${RAW_DISK_NAME}.raw  s3://aws-marketplace-upload-centos/disk-images/
 
 DISK_CONTAINER="Description=${IMAGE},Format=raw,UserBucket={S3Bucket=aws-marketplace-upload-centos,S3Key=disk-images/${RAW_DISK_NAME}.raw}"
-IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${NAME}-$(date +%s) --description "Import Base CentOS8 X86_64 Image" --disk-container $DISK_CONTAINER)
+IMPORT_SNAP=$(aws --region $REGION ec2 import-snapshot --client-token ${NAME}-$(date +%s) --description "Import Base CentOS8 $(arch) Image" --disk-container $DISK_CONTAINER)
 err "snapshot suceessfully imported to $IMPORT_SNAP"
 
 snapshotTask=$(echo $IMPORT_SNAP | jq -Mr '.ImportTaskId')
 
-while [[ "$(aws ec2 describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]] 
+while [[ "$(aws --region $REGION ec2 describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]] 
 do
-    aws ec2 describe-import-snapshot-tasks --import-task-ids $snapshotTask
+    aws --region $REGION ec2 describe-import-snapshot-tasks --import-task-ids $snapshotTask
     err "import snapshot is still active."
     sleep 60
 done
 
-snapshotId=$(aws ec2 describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
+snapshotId=$(aws --region $REGION ec2 describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
 
 err "Created snapshot: $snapshotId" 
 
@@ -75,7 +75,7 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 
 err $DEVICE_MAPPINGS
 
-ImageId=$(aws ec2 register-image --region $REGION --architecture=x86_64 \
+ImageId=$(aws --region $REGION ec2 register-image --architecture=${ARCHITECTURE} \
 	      --description='CentOS 8.2.2004 (x86_64) for HVM Instances' --virtualization-type hvm  \
 	      --root-device-name '/dev/sda1' \
 	      --name=${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE} \
@@ -86,20 +86,18 @@ ImageId=$(aws ec2 register-image --region $REGION --architecture=x86_64 \
 
 err "Produced Image ID $ImageId"
 
-err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m5.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
-aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m5.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
+err "aws --region $REGION ec2 run-instances --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m5.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
+aws --region $REGION  ec2 run-instances  --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m5.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
     rm -f ./${RAW_DISK_NAME}.raw
 
 # Share AMI with AWS Marketplace
-aws ec2 modify-snapshot-attribute \
+aws --region $REGION ec2 modify-snapshot-attribute \
     --snapshot-id $snapshotId \
-    --region $REGION \
     --attribute createVolumePermission \
     --operation-type add \
     --user-ids 679593333241 684062674729 425685993791
 
-aws ec2 modify-image-attribute \
+aws --region $REGION ec2 modify-image-attribute \
     --image-id $ImageId  \
-    --region $REGION \
     --attribute launchPermission \
     --user-ids "Add=[{UserId=679593333241}, {UserId=684062674729}, {UserId=425685993791}]"
