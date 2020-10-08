@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x -eu -o pipefail
+set -eu -o pipefail
 RELEASE=$1
 DATE=$(date +%Y%m%d)
 REGION=us-west-2
@@ -10,7 +10,15 @@ NAME="CentOS-8-ec2-8.2.2004"
 BUILD_DATE=$(date +%Y%m%d)
 IMAGE="CentOS-8-ec2-8.2.2004-20200611.2"
 ARCH=$(arch)
-ARCHITECTURE="arm64"
+if [[ "$ARCH" == "aarch64" ]] # We don't set the same arch in our architecture setting as the OS does
+then
+    ARCHITECTURE="arm64"
+    INSTANCE_TYPE="m6g.8xlarge"
+else
+    ARCHITECTURE=$(arch)
+    INSTANCE_TYPE="m5d.8xlarge"
+fi
+
 LINK="http://cloud.centos.org/centos/8/${ARCH}/images/${IMAGE}.${ARCH}.qcow2"
 
 
@@ -29,7 +37,7 @@ err "$LINK retrieved and saved at $(pwd)/${NAME}-${ARCHITECTURE}.qcow2"
 
 RAW_DISK_NAME="${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}" # Do not include the extension
 err "$RAW_DISK_NAME create begins"
-qemu-img convert -p \
+taskset -c 1 qemu-img convert -p \
 	 ./${NAME}-${ARCHITECTURE}.qcow2 ${RAW_DISK_NAME}.raw
 err "$RAW_DISK_NAME create complete"
 
@@ -86,8 +94,8 @@ ImageId=$(aws --region $REGION ec2 register-image --architecture=${ARCHITECTURE}
 
 err "Produced Image ID $ImageId"
 
-err "aws --region $REGION ec2 run-instances --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m5.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
-aws --region $REGION  ec2 run-instances  --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m5.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
+err "aws --region $REGION ec2 run-instances --subnet-id $SUBNET_ID --image-id $ImageId --instance-type $INSTANCE_TYPE --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
+aws --region $REGION  ec2 run-instances  --subnet-id $SUBNET_ID --image-id $ImageId --instance-type $INSTANCE_TYPE --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
     rm -f ./${RAW_DISK_NAME}.raw
 
 # Share AMI with AWS Marketplace
