@@ -107,5 +107,6 @@ aws --region $REGION ec2 modify-snapshot-attribute \
 
 aws --region $REGION ec2 modify-image-attribute \
     --image-id $ImageId  \
+    --operation-type add \
     --attribute launchPermission \
-    --user-ids "Add=[{UserId=679593333241}, {UserId=684062674729}, {UserId=425685993791}]"
+    --user-ids 679593333241 684062674729 425685993791
