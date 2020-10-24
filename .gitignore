@@ -10,3 +10,4 @@ tramp
 ansible/roles/geerlingguy*
 jenkins/pipelines-jobs/jenkins_jobs.ini
 .gitignore
+pyenv
