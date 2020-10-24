@@ -1,0 +1,4 @@
+* TODO: Configure Jenkins for standard
+  Add full support for the Jenkins environment.
+* Move the scripts to Ansible support
+  Establish builds as Ansible builds.
