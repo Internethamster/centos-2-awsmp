@@ -1,4 +1,7 @@
+.ONESHELL:
 SHELL:=/bin/bash
+.phony: pyenv ansible
+	JENKINS_PASSWORD ?= "FileTheThingsThatIFile"
 
 pyenv:
 	@python3 -m venv pyenv
@@ -7,8 +10,8 @@ pyenv:
 
 ansible:
 	@cd ansible
-	@ansible-galaxy collection install -r requirements.txt
-	@ansible-galaxy role install -r requirements.txt
-	@ansilbe-playbook -e "input_admin_pass=$(ANSIBLE_PASSWORD)" ./site.yml
+	@ansible-galaxy collection install -r requirements.yml
+	@ansible-galaxy role install -r requirements.yml
+	@ansible-playbook -e "input_admin_pass=$(JENKINS_PASSWORD)" ./site.yml
 
 all: pyenv ansible
