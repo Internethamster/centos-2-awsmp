@@ -1,9 +1,11 @@
 stage: devel
-vpcId: vpc-beb418d5
-subnetId: subnet-bb9b99c1
-amiId: ami-00004f98e29b46916
-arch: arm64
-boto_profile: image-builder
-aws_instance_role: jenkins-ec2-role
-aws_instance_type: m6g.large
-aws_region: us-east-2
+aws:
+  instance_role: jenkins-ec2-role
+  instance_type: m5d.xlarge
+  region: us-east-2
+  subnetId: subnet-bb9b99c1
+  vpcId: vpc-beb418d5
+  boto_profile: image-builder
+  ami:
+    Name: "CentOS 7.8.*"
+    owner_id: "125523088429"
