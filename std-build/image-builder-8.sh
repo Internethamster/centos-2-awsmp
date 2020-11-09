@@ -50,6 +50,9 @@ err "virt-customize -a ./${IMAGE_NAME}.raw  --update --install cloud-init"
 # virt-edit ./${IMAGE_NAME}.raw  /etc/cloud/cloud.cfg -e "s/name: centos/name: ec2-user/"
 # err "Modified Image to move centos to ec2-user"
 
+virt-edit ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1enforcing/"
+err "Modified ./${IMAGE_NAME}.raw to make it enforcing"
+
 virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel
 err "virt-customize -a ./${IMAGE_NAME}.raw --selinux relabel" 
 
