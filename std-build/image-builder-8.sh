@@ -5,7 +5,7 @@ MAJOR_RELEASE=8
 NAME="CentOS-${MAJOR_RELEASE}"
 
 ARCH="x86_64"
-MINOR_RELEASE="2.2004-20200611.2"
+MINOR_RELEASE="3.2011-20201204.2"
 VERSION=${1:-FIXME}
 
 DATE=$(date +%Y%m%d)
@@ -17,7 +17,7 @@ DRY_RUN="--dry-run"
 FILE="${NAME}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}.${ARCH}"
 LINK="http://cloud.centos.org/centos/8/$ARCH/images/${FILE}.qcow2"
 
-GenericImage="http://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2"
+GenericImage="http://cloud.centos.org/centos/8/x86_64/images/CentOS-8-ec2-8.3.2011-20201204.2.x86_64.qcow2"
 
 function err() {
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
@@ -41,16 +41,16 @@ err "$LINK retrieved and saved at $(pwd)/${FILE}.qcow2"
 qemu-img convert ./${FILE}.qcow2 ${IMAGE_NAME}.raw
 err "${IMAGE_NAME}.raw created" 
 
-virt-edit ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
+virt-edit -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
 
 virt-customize -a ./${IMAGE_NAME}.raw  --update --install cloud-init
-err "virt-customize -a ./${IMAGE_NAME}.raw  --update --install cloud-init"
+err "virt-customize -a ./${IMAGE_NAME}.raw  --update
 
 # virt-edit ./${IMAGE_NAME}.raw  /etc/cloud/cloud.cfg -e "s/name: centos/name: ec2-user/"
 # err "Modified Image to move centos to ec2-user"
 
-virt-edit ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1enforcing/"
+virt-edit -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1enforcing/"
 err "Modified ./${IMAGE_NAME}.raw to make it enforcing"
 
 virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel
