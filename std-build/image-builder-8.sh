@@ -20,7 +20,7 @@ LINK="http://cloud.centos.org/centos/8/$ARCH/images/${FILE}.qcow2"
 GenericImage="http://cloud.centos.org/centos/8/x86_64/images/CentOS-8-ec2-8.3.2011-20201204.2.x86_64.qcow2"
 
 function err() {
-  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
+    echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
 }
 
 if [ ! -e ${NAME}-${DATE}.txt ]; then
@@ -65,6 +65,7 @@ aws s3 cp ./${IMAGE_NAME}.raw  s3://davdunc-floppy/disk-images/
 err "Upload ${IMAGE_NAME}.raw image to S3://davdunc-floppy/disk-images/"
 
 DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=davdunc-floppy,S3Key=disk-images/${IMAGE_NAME}.raw}"
+
 IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container $DISK_CONTAINER)
 err "snapshot suceessfully imported to $IMPORT_SNAP"
 
