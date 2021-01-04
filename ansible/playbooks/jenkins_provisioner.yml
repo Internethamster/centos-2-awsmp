@@ -103,7 +103,7 @@
         name:
           - ansible
           - awscli
-          - jq 
+          - jq
         state: present
 
       
