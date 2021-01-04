@@ -28,4 +28,3 @@ keyed_groups:
   - key: tags['stage']
     prefix: status
     parent_group: "project"
-
