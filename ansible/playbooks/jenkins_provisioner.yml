@@ -1,4 +1,4 @@
---- 
+---
 - name: Build and deploy infrastructure for copying and updating the 2P Listings for OS partners
   hosts:
     localhost
@@ -22,7 +22,7 @@
       ec2_ami_info:
         owners: "{{ aws.ami.owner_id }}"
         region: "{{ aws.region }}"
-        filters:          
+        filters:
           name: "{{ aws.ami.Name }}"
           architecture: "{{ arch }}"
         profile: "{{ aws.boto_profile }}"
@@ -31,7 +31,7 @@
     - name: Record the images
       set_fact:
         centos_image: "{{ centos_images.images[0].image_id }}"
-        
+
     - name: Build the instance required for Jenkins
       ec2_instance:
         vpc_subnet_id: "{{ aws.subnetId }}"
@@ -60,7 +60,7 @@
 - name: Add the jenkins installation to the jenkins instance
   hosts: tag_purpose_jenkins
   become: true
-  
+
   vars:
     jenkins_package_state: latest
     jenkins_hostname: "{{ inventory_hostname }}"
@@ -76,34 +76,32 @@
     java_packages:
       - openjdk-8-jdk
     no_log: false
-      
+
   roles:
     - role: geerlingguy.java
       when: "ansible_os_family == 'RedHat'"
       java_packages:
-        - java-1.8.0-openjdk      
+        - java-1.8.0-openjdk
     - geerlingguy.jenkins
   tasks:
     - name: Add support for image builds
       yum:
         name:
           - epel-release
-          - git 
+          - git
           - java-1.8.0-openjdk
           - java-1.8.0-openjdk-headless
           - libguestfs-tools-c
-          - virt-install 
+          - virt-install
           - wget
-          - libguestfs-bash-completion 
+          - libguestfs-bash-completion
           - nvme-cli
         state: present
-        
-    - name: Add support for builds after epel is installed 
+
+    - name: Add support for builds after epel is installed
       yum:
         name:
           - ansible
           - awscli
           - jq
         state: present
-
-      
