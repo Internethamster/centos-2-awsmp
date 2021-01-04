@@ -8,3 +8,9 @@ auto-save-list
 tramp
 *.\#*
 ansible/roles/geerlingguy*
+jenkins/pipelines-jobs/jenkins_jobs.ini
+.gitignore
+pyenv
+pyenv/*
+/fedora-list.tsv
+/fedora-us-east-1.json

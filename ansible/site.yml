@@ -3,56 +3,45 @@
   hosts:
     localhost
   connection: local
-
+  vars_files:
+    - vars/main.yml
   vars:
-    stage: devel
     vpcId: vpc-beb418d5
     subnetId: subnet-bb9b99c1
-    ami:
-      Id: ami-0a75b786d9a7f8144
-      Name: "CentOS 7.8.*"
-      owner_id: "125523088429"
     arch: x86_64
-    boto_profile: image-builder
     aws_instance_role: jenkins-ec2-role
     aws_instance_type: m5.large
     aws_region: us-east-2
-      
 
   tasks:
-    - name: Add security group configuration for isntance.
+    - name: TODO | Add security group configuration for instance.
       debug:
-        msg: "Add dynamic security group - TODO"
+        msg: "Add security group configuration - TODO"
 
-    - name: Review information from the AMI config
-      debug:
-        msg: "ID is {{ ami.Id }} and NAME is {{ ami.Name }} and the owner is {{ ami.owner_id }}"
-
-    - name: Get the AMI for CentOS
+    - name: Identify the AMI for CentOS
       ec2_ami_info:
-        owners: "{{ ami.owner_id }}"
-        region: "{{ aws_region }}"
+        owners: "{{ aws.ami.owner_id }}"
+        region: "{{ aws.region }}"
         filters:          
-          name: "{{ ami.Name }}"
+          name: "{{ aws.ami.Name }}"
           architecture: "{{ arch }}"
-        profile: "{{ boto_profile }}"
+        profile: "{{ aws.boto_profile }}"
       register: centos_images
 
-    - name: Report the images
-      debug:
-        var: centos_images
-        
+    - name: Record the images
+      set_fact:
+        centos_image: "{{ centos_images.images[0].image_id }}"
         
     - name: Build the instance required for Jenkins
       ec2_instance:
-        vpc_subnet_id: "{{ subnetId }}"
-        image_id: "{{ ami.Id }}"
-        instance_role: "{{ aws_instance_role }}"
-        instance_type: "{{ aws_instance_type }}"
+        vpc_subnet_id: "{{ aws.subnetId }}"
+        image_id: "{{ centos_image }}"
+        instance_role: "{{ aws.instance_role }}"
+        instance_type: "{{ aws.instance_type }}"
         user_data: "{{ lookup('file', 'files/jenkins-instance-userdata.yml') }}"
         name: jenkins-builder
-        profile: "{{ boto_profile }}"
-        region:  "{{ aws_region }}"
+        profile: "{{ aws.boto_profile }}"
+        region:  "{{ aws.region }}"
         security_group: "launch-wizard-1"
         wait: true
         tags:
@@ -62,9 +51,11 @@
         volumes:
           - device_name: /dev/sda1
             ebs:
-              volume_size: 16
+              volume_size: 32
               delete_on_termination: true
       register: jenkins_host
+    - name: Gather facts now that there are new instances
+      setup:
 
 - name: Add the jenkins installation to the jenkins instance
   hosts: tag_purpose_jenkins
@@ -92,3 +83,27 @@
       java_packages:
         - java-1.8.0-openjdk      
     - geerlingguy.jenkins
+  tasks:
+    - name: Add support for image builds
+      yum:
+        name:
+          - epel-release
+          - git 
+          - java-1.8.0-openjdk
+          - java-1.8.0-openjdk-headless
+          - libguestfs-tools-c
+          - virt-install 
+          - wget
+          - libguestfs-bash-completion 
+          - nvme-cli
+        state: present
+        
+    - name: Add support for builds after epel is installed 
+      yum:
+        name:
+          - ansible
+          - awscli
+          - jq 
+        state: present
+
+      
