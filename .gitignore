@@ -14,3 +14,4 @@ pyenv
 pyenv/*
 /fedora-list.tsv
 /fedora-us-east-1.json
+ansible_collections/
