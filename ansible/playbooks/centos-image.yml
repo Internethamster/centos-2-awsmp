@@ -1,0 +1,59 @@
+---
+- name: Identify the AMI for CentOS
+  hosts:
+    localhost
+  connection: local
+
+  vars:
+    centos_version:
+      Stream8: CentOS Stream 8 x86_64
+      CentOS8: CentOS 8.3.2011 x86_64
+      CentOS7: CentOS 7.9.2009 x86_64
+    stage: devel
+    vpcId: vpc-beb418d5
+    subnetId: subnet-bb9b99c1
+    ami:
+      Id: ami-0a75b786d9a7f8144
+      Name: "CentOS 7.9.*"
+      owner_id: "125523088429"
+    arch: x86_64
+    boto_profile: ansible
+    aws_instance_role: jenkins-ec2-role
+    aws_instance_type: m5.large
+    aws_region: us-east-2
+  tasks:
+    
+  - name: "Get the Details for {{ centos_version.Stream8 }}"
+    ec2_ami_info:
+      owners: "{{ ami.owner_id }}"
+      region: "{{ aws_region }}"
+      filters:          
+        name: "{{ centos_version.Stream8 }}"
+        architecture: "{{ arch }}"
+      profile: "{{ boto_profile | default(omit) }}"
+    register: centos_stream_8
+  - name: "Get the Details for {{ centos_version.CentOS8 }}"
+    ec2_ami_info:
+      owners: "{{ ami.owner_id }}"
+      region: "{{ aws_region }}"
+      filters:          
+        name: "{{ centos_version.CentOS8 }}"
+        architecture: "{{ arch }}"
+      profile: "{{ boto_profile | default(omit) }}"
+    register: centos_8_images
+  - name: "Get the Details for {{ centos_version.CentOS7 }}"
+    ec2_ami_info:
+      owners: "{{ ami.owner_id }}"
+      region: "{{ aws_region }}"
+      filters:          
+        name: "{{ centos_version.CentOS7 }}"
+        architecture: "{{ arch }}"
+      profile: "{{ boto_profile | default(omit) }}"
+    register: centos_7_images
+
+  - name: Report the images
+    set_fact:
+      centos_stream_8_image: "{{ centos_stream_8.images[-1].image_id }}"
+      centos_8_image: "{{ centos_8_images.images[-1].image_id }}"
+      centos_7_image: "{{ centos_7_images.images[-1].image_id }}"
+      
