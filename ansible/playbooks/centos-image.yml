@@ -1,8 +1,8 @@
 ---
 - name: Identify the AMI for CentOS
-  hosts:
-    localhost
+  hosts: localhost
   connection: local
+  gather_facts: no
 
   vars:
     centos_version:
@@ -17,7 +17,7 @@
       Name: "CentOS 7.9.*"
       owner_id: "125523088429"
     arch: x86_64
-    boto_profile: ansible
+#     boto_profile: ansible
     aws_instance_role: jenkins-ec2-role
     aws_instance_type: m5.large
     aws_region: us-east-2
@@ -56,4 +56,7 @@
       centos_stream_8_image: "{{ centos_stream_8.images[-1].image_id }}"
       centos_8_image: "{{ centos_8_images.images[-1].image_id }}"
       centos_7_image: "{{ centos_7_images.images[-1].image_id }}"
+      centos_stream_8_snapshot: "{{ centos_stream_8.images[-1].block_device_mappings[0].ebs.snapshot_id }}"
+      centos_8_snapshot: "{{ centos_8_images.images[-1].block_device_mappings[0].ebs.snapshot_id }}"
+      centos_7_snapshot: "{{ centos_7_images.images[-1].block_device_mappings[0].ebs.snapshot_id }}"
       
