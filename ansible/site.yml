@@ -12,4 +12,3 @@
     - name: test for centos 8 image
       ansible.builtin.debug:
         var: centos_8_image
-    
