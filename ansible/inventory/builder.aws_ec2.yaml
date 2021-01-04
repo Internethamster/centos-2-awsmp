@@ -28,3 +28,8 @@ keyed_groups:
   - key: tags['stage']
     prefix: status
     parent_group: "project"
+hostnames:
+  - dns-name
+  - private-dns-name
+  - network-interface.addresses.primary
+  - private-ip-address
