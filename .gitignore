@@ -3,8 +3,11 @@
 \#*\#
 .*\#*
 ansible/roles/geerlingguy*
+<<<<<<< Updated upstream
 jenkins/pipelines-jobs/jenkins_jobs.ini
 .gitignore
 pyenv
 pyenv/*
+=======
+>>>>>>> Stashed changes
 /ansible/ansible_collections/
