@@ -1,17 +1,10 @@
 # -*- mode: gitignore; -*-
 *~
 \#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-*.\#*
+.*\#*
 ansible/roles/geerlingguy*
 jenkins/pipelines-jobs/jenkins_jobs.ini
 .gitignore
 pyenv
 pyenv/*
-/fedora-list.tsv
-/fedora-us-east-1.json
-ansible_collections/
+/ansible/ansible_collections/
