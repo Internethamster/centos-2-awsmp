@@ -9,7 +9,7 @@ pipeline {
                 git 'https://github.com/Internethamster/centos-2-awsmp.git'
             }
         } 
-        stage('Clean Workspace and Checkout Source') { 
+        stage('Clean Workspace and Checkout Source') {
             deleteDir()
             checkout scm
             notifyStash()
