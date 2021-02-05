@@ -10,9 +10,11 @@ pipeline {
             }
         } 
         stage('Clean Workspace and Checkout Source') {
-            deleteDir()
-            checkout scm
-            notifyStash()
+            steps {
+                deleteDir()
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'davdunc-previous', url: 'git@github.com:Internethamster/centos-2-awsmp.git']]])
+                notifyStash()
+            }
         }
         stage('Initiate Pipeline') { 
             steps { 
