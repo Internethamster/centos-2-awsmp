@@ -5,9 +5,9 @@ pipeline {
     }
     stages {
         stage('Cloning Git') {
-           steps {
-            git 'https://github.com/Internethamster/centos-2-awsmp.git'
-           }
+            steps {
+                git 'https://github.com/Internethamster/centos-2-awsmp.git'
+            }
         } 
         stage('Clean Workspace and Checkout Source') { 
             deletDir()
@@ -23,6 +23,7 @@ pipeline {
             steps {
                 sh 'chmod +x image-builder-6.sh'
                 sh './image-builder-6.sh'            
+            }
         }
         stage('Deploy Image Builder 7') {
             steps {
@@ -34,6 +35,7 @@ pipeline {
             steps {
                 sh 'chmod +x ./image-builder-8.sh'
                 sh './image-builder-8.sh'            
+            }
         }
     }
 }
