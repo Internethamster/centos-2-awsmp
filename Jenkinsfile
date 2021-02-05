@@ -13,7 +13,6 @@ pipeline {
             steps {
                 deleteDir()
                 checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'davdunc-previous', url: 'git@github.com:Internethamster/centos-2-awsmp.git']]])
-                notifyStash()
             }
         }
         stage('Initiate Pipeline') { 
