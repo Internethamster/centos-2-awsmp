@@ -1,3 +1,4 @@
+Jenkinsfile (Declarative Pipeline)
 pipeline { 
     agent any 
     options {
@@ -10,7 +11,7 @@ pipeline {
             }
         } 
         stage('Clean Workspace and Checkout Source') { 
-            deletDir()
+            deleteDir()
             checkout scm
             notifyStash()
         }
