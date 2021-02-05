@@ -22,8 +22,8 @@ pipeline {
         }
         stage('Deploy Image Builder 6') {
             steps {
-                sh 'chmod +x image-builder-6.sh'
-                sh './image-builder-6.sh'            
+                sh 'chmod +x ./std-build/image-builder-6.sh'
+                sh './std-build/image-builder-6.sh'            
             }
         }
         stage('Deploy Image Builder 7') {
