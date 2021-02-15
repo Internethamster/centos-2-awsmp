@@ -2,10 +2,57 @@
 # CENTOS-7 BUILDER
 set -x -euo pipefail
 
+usage() {
+    echo "Usage: $0 [ -v VERSION ] [ -b BUCKET_NAME ] [ -k OBJECT_PREFIX ] [ -a ARCH ] [ -n NAME ] [ -r RELEASE ]" 1>&2
+}
+exit_abnormal() {
+    usage
+    exit 1
+}
+
+
+VERSION="FIXME"
+S3_BUCKET="aws-marketplace-upload-centos"
+S3_PREFIX="${S3_PREFIX}"
+
 NAME="CentOS-7"
 ARCH="x86_64"
 RELEASE="2003"
-VERSION=${1:-FIXME}
+
+while getopts ":v:b:k:a:n:r:p" options; do
+    case "${options}" in
+        v)
+            VERSION=${OPTARG}
+            ;;
+        t)
+            S3_BUCKET=${OPTARG}
+            ;;
+        k)
+            S3_PREFIX=${OPTARG}
+            ;;
+        r)
+            RELEASE=${OPTARG}
+            ;;
+        a)
+            ARCH=${OPTARG}
+            ;;
+        n)
+            NAME=${OPTARG}
+            ;;
+        p)
+            PSTATE="True"
+            ;;
+        :)
+            "Error: -${OPTARG} requires an argument"
+            ;;
+        *)
+            exit_abnormal
+            ;;
+    esac
+done
+         
+           
+
 
 DATE=$(date +%Y%m%d)
 REGION=cn-northwest-1
@@ -53,12 +100,12 @@ err "upgrading the current packages for the instance: ${IMAGE_NAME}"
 virt-sysprep -a ./${IMAGE_NAME}.raw
 
 err "Cleaned up the volume in preparation for the AWS Marketplace"
-err "Upload ${IMAGE_NAME}.raw image to S3://davdunc-floppy/disk-images/"
+err "Upload ${IMAGE_NAME}.raw image to S3://${S3_BUCKET}/${S3_PREFIX}/"
 
-aws s3 cp ./${IMAGE_NAME}.raw  s3://davdunc-floppy/disk-images/
+aws s3 cp ./${IMAGE_NAME}.raw  s3://${S3_BUCKET}/${S3_PREFIX}/
 rm ${IMAGE_NAME}.raw
 
-DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=davdunc-floppy,S3Key=disk-images/${IMAGE_NAME}.raw}"
+DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
 
 IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${NAME}-$(date +%s) --description "Import Base ${NAME} ${ARCH} Image" --disk-container $DISK_CONTAINER)
 err "snapshot suceessfully imported to $IMPORT_SNAP"

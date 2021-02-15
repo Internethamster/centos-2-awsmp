@@ -36,7 +36,7 @@ while getopts ":v:t:r:a:n:b:k:p" options; do
             S3_BUCKET=${OPTARG}
             ;;
         k)
-            OBJECT_PREFIX=${OPTARG}
+            S3_PREFIX=${OPTARG}
             ;;
         r)
             RELEASE=${OPTARG}
@@ -88,10 +88,10 @@ virt-edit -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
 
 virt-customize -a ./${IMAGE_NAME}.raw  --update --install cloud-init
-err "virt-customize -a ./${IMAGE_NAME}.raw  --update
+err "virt-customize -a ./${IMAGE_NAME}.raw  --update"
 
 # virt-edit ./${IMAGE_NAME}.raw  /etc/cloud/cloud.cfg -e "s/name: centos/name: ec2-user/"
-# err "Modified Image to move centos to ec2-user"
+#  err "Modified Image to move centos to ec2-user"
 
 virt-edit -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1enforcing/"
 err "Modified ./${IMAGE_NAME}.raw to make it enforcing"
@@ -104,10 +104,10 @@ err "upgrading the current packages for the instance: ${IMAGE_NAME}"
 
 err "Cleaned up the volume in preparation for the AWS Marketplace"
 
-aws s3 cp ./${IMAGE_NAME}.raw  s3://davdunc-floppy/disk-images/
-err "Upload ${IMAGE_NAME}.raw image to S3://davdunc-floppy/disk-images/"
+aws s3 cp ./${IMAGE_NAME}.raw  s3://${S3_BUCKET}/${OBJECT_PREFIX}/
+err "Upload ${IMAGE_NAME}.raw image to S3://${S3_BUCKET}/${OBJECT_PREFIX}/"
 
-DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=davdunc-floppy,S3Key=disk-images/${IMAGE_NAME}.raw}"
+DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${OBJECT_PREFIX}/${IMAGE_NAME}.raw}"
 
 IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container $DISK_CONTAINER)
 err "snapshot suceessfully imported to $IMPORT_SNAP"
@@ -132,7 +132,7 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 err $DEVICE_MAPPINGS
 
 ImageId=$(aws ec2 register-image --region $REGION --architecture=x86_64 \
-              --description='${NAME}.${MINOR_RELEASE} ($ARCH) for HVM Instances' --virtualization-type hvm  \
+              --description="${NAME}.${MINOR_RELEASE} ($ARCH) for HVM Instances" --virtualization-type hvm  \
               --root-device-name '/dev/sda1'     --name=${IMAGE_NAME}     --ena-support --sriov-net-support simple \
               --block-device-mappings "${DEVICE_MAPPINGS}" \
               --output text)
