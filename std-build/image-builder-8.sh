@@ -13,6 +13,7 @@ REGION=cn-northwest-1
 SUBNET_ID=subnet-0890b142
 SECURITY_GROUP_ID=sg-5993f530
 DRY_RUN="--dry-run"
+
 usage() {
     echo "Usage: $0 [ -v VERSION ] [ -b BUCKET_NAME ] [ -k OBJECT_PREFIX ] [ -a ARCH ] [ -n NAME ] [ -r RELEASE ] [ -p ] " 1>&2
 }
@@ -59,7 +60,7 @@ done
 FILE="${NAME}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}.${ARCH}"
 LINK="http://cloud.centos.org/centos/8/$ARCH/images/${FILE}.qcow2"
 
-GenericImage="http://cloud.centos.org/centos/8/x86_64/images/CentOS-8-ec2-8.3.2011-20201204.2.x86_64.qcow2"
+GenericImage="https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-ec2-8.3.2011-20201204.2.x86_64.qcow2"
 
 function err() {
     echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
