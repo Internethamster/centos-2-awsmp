@@ -2,6 +2,7 @@
 collections:
   - name: community.aws
   - name: amazon.aws
+  - name: community.general
 
 roles:
   - name: geerlingguy.java
