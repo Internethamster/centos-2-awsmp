@@ -1,6 +1,7 @@
 usage() {
     echo "Usage: $0 [ -v VERSION ] [ -b BUCKET_NAME ] [ -k OBJECT_PREFIX ] [ -a ARCH ] [ -n NAME ] [ -r RELEASE ] [ -R REGION ] [ -d DRY_RUN ]" 1>&2
 }
+
 exit_abnormal() {
     usage
     exit 1
@@ -41,7 +42,6 @@ while getopts ":v:b:k:a:n:r:R:p" options; do
             ;;
     esac
 done
-
 
 get_default_vpc_subnet () {
     local REGION=$1

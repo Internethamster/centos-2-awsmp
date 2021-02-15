@@ -12,9 +12,6 @@ DATE=$(date +%Y%m%d)
 FILE="${NAME}-${ARCH}-GenericCloud-${RELEASE}.qcow2"
 LINK="http://cloud.centos.org/centos/7/images/${FILE}.xz"
 
-NAME="CentOS-7"
-ARCH="x86_64"
-RELEASE="2003"
 
 source ./shared_functions.sh
 
@@ -22,7 +19,15 @@ source ./shared_functions.sh
 SUBNET_ID=$(get_default_vpc_subnet REGION)
 SECURITY_GROUP_ID=$(get_default_sg_for_vpc $REGION)
 
-
+if [[ -z $NAME ]] ; then
+    NAME="CentOS-7"
+fi
+if [[ -z $ARCH ]] ; then
+    ARCH="x86_64"
+fi
+if [[ -z $RELEASE ]]; then
+    RELEASE="2003"
+fi
 function err() {
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
 }
