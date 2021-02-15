@@ -1,5 +1,5 @@
 usage() {
-    echo "Usage: $0 [ -v VERSION ] [ -b BUCKET_NAME ] [ -k OBJECT_PREFIX ] [ -a ARCH ] [ -n NAME ] [ -r RELEASE ] [ -R REGION ]" 1>&2
+    echo "Usage: $0 [ -v VERSION ] [ -b BUCKET_NAME ] [ -k OBJECT_PREFIX ] [ -a ARCH ] [ -n NAME ] [ -r RELEASE ] [ -R REGION ] [ -d DRY_RUN ]" 1>&2
 }
 exit_abnormal() {
     usage
@@ -30,8 +30,8 @@ while getopts ":v:b:k:a:n:r:R:p" options; do
         n)
             NAME=${OPTARG}
             ;;
-        p)
-            PSTATE="True"
+        d)
+            DRY_RUN="--dry-run"
             ;;
         :)
             "Error: -${OPTARG} requires an argument"
@@ -41,3 +41,18 @@ while getopts ":v:b:k:a:n:r:R:p" options; do
             ;;
     esac
 done
+
+
+get_default_vpc_subnet () {
+    local REGION=$1
+    local VPC_ID=$(aws ec2 describe-vpcs --region $REGION --query "Vpcs[?IsDefault].VpcId" --output text)
+    aws ec2 describe-subnets --region $REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[?MapPublicIpOnLaunch] | [0].SubnetId" --output text
+
+}
+
+get_default_sg_for_vpc () {
+    local REGION=$1
+    local VPC_ID=$(aws ec2 describe-vpcs --region $REGION --query "Vpcs[?IsDefault].VpcId" --output text)
+    aws ec2 describe-security-groups --region $REGION --filters "Name=vpc-id,Values=${VPC_ID}" --query 'SecurityGroups[?GroupName == `default`].GroupId' --output text
+}
+

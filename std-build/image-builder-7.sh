@@ -2,65 +2,26 @@
 # CENTOS-7 BUILDER
 set -x -euo pipefail
 
-usage() {
-    echo "Usage: $0 [ -v VERSION ] [ -b BUCKET_NAME ] [ -k OBJECT_PREFIX ] [ -a ARCH ] [ -n NAME ] [ -r RELEASE ]" 1>&2
-}
-exit_abnormal() {
-    usage
-    exit 1
-}
-
+S3_BUCKET="aws-marketplace-upload-centos"
+S3_PREFIX="disk-images"
+REGION=us-east-1
 
 VERSION="FIXME"
-S3_BUCKET="aws-marketplace-upload-centos"
-S3_PREFIX="${S3_PREFIX}"
+DRY_RUN="--dry-run"
+DATE=$(date +%Y%m%d)
+FILE="${NAME}-${ARCH}-GenericCloud-${RELEASE}.qcow2"
+LINK="http://cloud.centos.org/centos/7/images/${FILE}.xz"
 
 NAME="CentOS-7"
 ARCH="x86_64"
 RELEASE="2003"
 
-while getopts ":v:b:k:a:n:r:p" options; do
-    case "${options}" in
-        v)
-            VERSION=${OPTARG}
-            ;;
-        t)
-            S3_BUCKET=${OPTARG}
-            ;;
-        k)
-            S3_PREFIX=${OPTARG}
-            ;;
-        r)
-            RELEASE=${OPTARG}
-            ;;
-        a)
-            ARCH=${OPTARG}
-            ;;
-        n)
-            NAME=${OPTARG}
-            ;;
-        p)
-            PSTATE="True"
-            ;;
-        :)
-            "Error: -${OPTARG} requires an argument"
-            ;;
-        *)
-            exit_abnormal
-            ;;
-    esac
-done
-         
-           
+source ./shared_functions.sh
 
+# get_default_vpc_subnet in shared_functions
+SUBNET_ID=$(get_default_vpc_subnet REGION)
+SECURITY_GROUP_ID=$(get_default_sg_for_vpc $REGION)
 
-DATE=$(date +%Y%m%d)
-REGION=cn-northwest-1
-SUBNET_ID=subnet-0890b142
-SECURITY_GROUP_ID=sg-5993f530
-DRY_RUN="--dry-run"
-FILE="${NAME}-${ARCH}-GenericCloud-${RELEASE}.qcow2"
-LINK="http://cloud.centos.org/centos/7/images/${FILE}.xz"
 
 function err() {
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
