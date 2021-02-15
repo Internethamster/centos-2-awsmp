@@ -13,6 +13,48 @@ REGION=cn-northwest-1
 SUBNET_ID=subnet-0890b142
 SECURITY_GROUP_ID=sg-5993f530
 DRY_RUN="--dry-run"
+usage() {
+    echo "Usage: $0 [ -v VERSION ] [ -b BUCKET_NAME ] [ -k OBJECT_PREFIX ] [ -a ARCH ] [ -n NAME ] [ -r RELEASE ] [ -p ] " 1>&2
+}
+exit_abnormal() {
+    usage
+    exit 1
+}
+
+
+VERSION="FIXME"
+S3_BUCKET="aws-marketplace-upload-centos"
+S3_PREFIX="disk-images"
+
+while getopts ":v:t:r:a:n:b:k:p" options; do
+    case "${options}" in
+        v)
+            VERSION=${OPTARG}
+            ;;
+        t)
+            S3_BUCKET=${OPTARG}
+            ;;
+        k)
+            OBJECT_PREFIX=${OPTARG}
+            ;;
+        r)
+            RELEASE=${OPTARG}
+            ;;
+        a)
+            ARCH=${OPTARG}
+            ;;
+        n)
+            NAME=${OPTARG}
+            ;;
+        :)
+            "Error: -${OPTARG} requires an argument"
+            ;;
+        *)
+            exit_abnormal
+            ;;
+    esac
+done
+
 
 FILE="${NAME}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}.${ARCH}"
 LINK="http://cloud.centos.org/centos/8/$ARCH/images/${FILE}.qcow2"
@@ -39,7 +81,7 @@ curl -C - -o ${FILE}.qcow2 $LINK
 err "$LINK retrieved and saved at $(pwd)/${FILE}.qcow2"
 
 qemu-img convert ./${FILE}.qcow2 ${IMAGE_NAME}.raw
-err "${IMAGE_NAME}.raw created" 
+err "${IMAGE_NAME}.raw created"
 
 virt-edit -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
@@ -54,7 +96,7 @@ virt-edit -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1
 err "Modified ./${IMAGE_NAME}.raw to make it enforcing"
 
 virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel
-err "virt-customize -a ./${IMAGE_NAME}.raw --selinux relabel" 
+err "virt-customize -a ./${IMAGE_NAME}.raw --selinux relabel"
 
 virt-sysprep -a ./${IMAGE_NAME}.raw
 err "upgrading the current packages for the instance: ${IMAGE_NAME}"
@@ -71,7 +113,7 @@ err "snapshot suceessfully imported to $IMPORT_SNAP"
 
 snapshotTask=$(echo $IMPORT_SNAP | jq -Mr '.ImportTaskId')
 
-while [[ "$(aws ec2 describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]] 
+while [[ "$(aws ec2 describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]]
 do
     aws ec2 describe-import-snapshot-tasks --import-task-ids $snapshotTask
     err "import snapshot is still active."
@@ -80,7 +122,7 @@ done
 
 snapshotId=$(aws ec2 describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
 
-err "Created snapshot: $snapshotId" 
+err "Created snapshot: $snapshotId"
 
 sleep 20
 
@@ -89,10 +131,10 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 err $DEVICE_MAPPINGS
 
 ImageId=$(aws ec2 register-image --region $REGION --architecture=x86_64 \
-	      --description='${NAME}.${MINOR_RELEASE} ($ARCH) for HVM Instances' --virtualization-type hvm  \
-	      --root-device-name '/dev/sda1'     --name=${IMAGE_NAME}     --ena-support --sriov-net-support simple \
-	      --block-device-mappings "${DEVICE_MAPPINGS}" \
-	      --output text)
+              --description='${NAME}.${MINOR_RELEASE} ($ARCH) for HVM Instances' --virtualization-type hvm  \
+              --root-device-name '/dev/sda1'     --name=${IMAGE_NAME}     --ena-support --sriov-net-support simple \
+              --block-device-mappings "${DEVICE_MAPPINGS}" \
+              --output text)
 
 err "Produced Image ID $ImageId"
 echo "SNAPSHOT : ${snapshotId}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MINOR_RELEASE}.txt
