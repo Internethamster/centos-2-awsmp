@@ -12,8 +12,9 @@ pipeline {
         }
         stage('Deploy Image Builder 7') {
             steps {
-                sh 'chmod +x ./std-build/image-builder-7.sh'
-                sh './std-build/image-builder-7.sh -b aws-marketplace-upload-centos -k disk-images'
+                sh 'cd ./std-build/' 
+                sh 'chmod +x ./image-builder-7.sh'
+                sh './image-builder-7.sh -b aws-marketplace-upload-centos -k disk-images'
             }
         }
         stage('Deploy Image Builder 8') {
