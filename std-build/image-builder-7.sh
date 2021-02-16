@@ -37,8 +37,8 @@ fi
 
 
 IMAGE_NAME="${NAME}-${RELEASE}-${DATE}_${VERSION}.${ARCH}"
-
-err "$LINK to be retrieved and saved at $(pwd)/${FILE}.xz"
+err "$(pwd)"
+err "$LINK to be retrieved and saved at ./${FILE}.xz"
 curl -C - -o ${FILE}.xz ${LINK}
 
 
