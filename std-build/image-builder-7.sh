@@ -2,12 +2,8 @@
 # CENTOS-7 BUILDER
 set -x -euo pipefail
 
-S3_BUCKET="aws-marketplace-upload-centos"
-S3_PREFIX="disk-images"
-REGION=us-east-1
 
 VERSION="FIXME"
-DRY_RUN="--dry-run"
 DATE=$(date +%Y%m%d)
 FILE="${NAME}-${ARCH}-GenericCloud-${RELEASE}.qcow2"
 LINK="http://cloud.centos.org/centos/7/images/${FILE}.xz"
@@ -15,9 +11,6 @@ LINK="http://cloud.centos.org/centos/7/images/${FILE}.xz"
 
 source ./shared_functions.sh
 
-# get_default_vpc_subnet in shared_functions
-SUBNET_ID=$(get_default_vpc_subnet REGION)
-SECURITY_GROUP_ID=$(get_default_sg_for_vpc $REGION)
 
 if [[ -z $NAME ]] ; then
     NAME="CentOS-7"
@@ -28,9 +21,21 @@ fi
 if [[ -z $RELEASE ]]; then
     RELEASE="2003"
 fi
-function err() {
-  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
-}
+
+if [[ -z $S3_BUCKET ]]; then
+    S3_BUCKET="aws-marketplace-upload-centos"
+fi
+
+if [[ -z $S3_PREFIX ]]; then
+    S3_PREFIX="disk-images"
+fi
+
+if [[ -z $REGION ]]; then
+    exit_abnormal
+fi
+
+SUBNET_ID=$(get_default_vpc_subnet $REGION)
+SECURITY_GROUP_ID=$(get_default_sg_for_vpc $REGION)
 
 if [ ! -e ${NAME}-${DATE}.txt ]; then
     echo "0" > ${NAME}-${DATE}.txt
@@ -40,6 +45,8 @@ if [ "$VERSION" == "FIXME" ]; then
     echo $(( $(cat ${NAME}-${DATE}.txt) + 1 )) > ${NAME}-${DATE}.txt
     VERSION=$(cat ${NAME}-${DATE}.txt)
 fi
+
+
 IMAGE_NAME="${NAME}-${RELEASE}-${DATE}_${VERSION}.${ARCH}"
 
 err "$LINK to be retrieved and saved at $(pwd)/${FILE}.xz"
