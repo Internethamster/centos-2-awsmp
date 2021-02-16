@@ -1,0 +1,107 @@
+---
+- name: Build and deploy infrastructure for copying and updating the 2P Listings for OS partners
+  hosts:
+    localhost
+  connection: local
+  vars_files:
+    - vars/main.yml
+  vars:
+    vpcId: vpc-beb418d5
+    subnetId: subnet-bb9b99c1
+    arch: x86_64
+    aws_instance_role: jenkins-ec2-role
+    aws_instance_type: m5.large
+    aws_region: us-east-2
+
+  tasks:
+    - name: TODO | Add security group configuration for instance.
+      debug:
+        msg: "Add security group configuration - TODO"
+
+    - name: Identify the AMI for CentOS
+      ec2_ami_info:
+        owners: "{{ aws.ami.owner_id }}"
+        region: "{{ aws.region }}"
+        filters:
+          name: "{{ aws.ami.Name }}"
+          architecture: "{{ arch }}"
+        profile: "{{ aws.boto_profile }}"
+      register: centos_images
+
+    - name: Record the images
+      set_fact:
+        centos_image: "{{ centos_images.images[0].image_id }}"
+
+    - name: Build the instance required for Jenkins
+      ec2_instance:
+        vpc_subnet_id: "{{ aws.subnetId }}"
+        image_id: "{{ centos_image }}"
+        instance_role: "{{ aws.instance_role }}"
+        instance_type: "{{ aws.instance_type }}"
+        user_data: "{{ lookup('file', 'files/jenkins-instance-userdata.yml') }}"
+        name: jenkins-builder
+        profile: "{{ aws.boto_profile }}"
+        region:  "{{ aws.region }}"
+        security_group: "launch-wizard-1"
+        wait: true
+        tags:
+          task: image-builder
+          stage: deployment
+          purpose: jenkins
+        volumes:
+          - device_name: /dev/sda1
+            ebs:
+              volume_size: 32
+              delete_on_termination: true
+      register: jenkins_host
+    - name: Gather facts now that there are new instances
+      setup:
+
+- name: Add the jenkins installation to the jenkins instance
+  hosts: tag_purpose_jenkins
+  become: true
+
+  vars:
+    jenkins_package_state: latest
+    jenkins_hostname: "{{ inventory_hostname }}"
+    jenkins_http_port: 8443
+    jenkins_admin_username: admin
+    jenkins_admin_password: "{{ input_admin_pass }}"
+    jenkins_plugins:
+      - blueocean
+    jenkins_plugins_install_dependencies: true
+    jenkins_plugins_state: latest
+    jenkins_prefer_lts: false
+    jenkins_java_options: "-Djenkins.install.runSetupWizard=false"
+    java_packages:
+      - openjdk-8-jdk
+    no_log: false
+
+  roles:
+    - role: geerlingguy.java
+      when: "ansible_os_family == 'RedHat'"
+      java_packages:
+        - java-1.8.0-openjdk
+    - geerlingguy.jenkins
+  tasks:
+    - name: Add support for image builds
+      yum:
+        name:
+          - epel-release
+          - git
+          - java-1.8.0-openjdk
+          - java-1.8.0-openjdk-headless
+          - libguestfs-tools-c
+          - virt-install
+          - wget
+          - libguestfs-bash-completion
+          - nvme-cli
+        state: present
+
+    - name: Add support for builds after epel is installed
+      yum:
+        name:
+          - ansible
+          - awscli
+          - jq
+        state: present

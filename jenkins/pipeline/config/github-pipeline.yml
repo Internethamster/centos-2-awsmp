@@ -1,0 +1,21 @@
+--- #;;; -*- yaml-mode -*
+- project:
+    name: github-pipelines-projects
+      project_name:
+        - static
+        - remote
+      jobs
+- job:
+    name: github-pipeline
+    project-type: pipeline
+    defaults: global
+    pipeline-scm:
+      script-path: "Jenkinsfile"
+      scm:
+        - git:
+            - url: https://github.com/Internethamster/centos-2-awsmp.git
+              clean: true
+
+    triggers:
+      - pullscm:
+          cron: "*/5 * * * *"

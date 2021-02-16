@@ -1,94 +1,14 @@
---- 
-- name: Build and deploy infrastructure for copying and updating the 2P Listings for OS partners
-  hosts:
-    localhost
+---
+
+- name: set the centos image information
+  ansible.builtin.import_playbook: playbooks/centos-image.yml
+
+- name: check image fax
+  hosts: localhost
+  gather_facts: no
   connection: local
 
-  vars:
-    stage: devel
-    vpcId: vpc-beb418d5
-    subnetId: subnet-bb9b99c1
-    ami:
-      Id: ami-0a75b786d9a7f8144
-      Name: "CentOS 7.8.*"
-      owner_id: "125523088429"
-    arch: x86_64
-    boto_profile: image-builder
-    aws_instance_role: jenkins-ec2-role
-    aws_instance_type: m5.large
-    aws_region: us-east-2
-      
-
   tasks:
-    - name: Add security group configuration for isntance.
-      debug:
-        msg: "Add dynamic security group - TODO"
-
-    - name: Review information from the AMI config
-      debug:
-        msg: "ID is {{ ami.Id }} and NAME is {{ ami.Name }} and the owner is {{ ami.owner_id }}"
-
-    - name: Get the AMI for CentOS
-      ec2_ami_info:
-        owners: "{{ ami.owner_id }}"
-        region: "{{ aws_region }}"
-        filters:          
-          name: "{{ ami.Name }}"
-          architecture: "{{ arch }}"
-        profile: "{{ boto_profile }}"
-      register: centos_images
-
-    - name: Report the images
-      debug:
-        var: centos_images
-        
-        
-    - name: Build the instance required for Jenkins
-      ec2_instance:
-        vpc_subnet_id: "{{ subnetId }}"
-        image_id: "{{ ami.Id }}"
-        instance_role: "{{ aws_instance_role }}"
-        instance_type: "{{ aws_instance_type }}"
-        user_data: "{{ lookup('file', 'files/jenkins-instance-userdata.yml') }}"
-        name: jenkins-builder
-        profile: "{{ boto_profile }}"
-        region:  "{{ aws_region }}"
-        security_group: "launch-wizard-1"
-        wait: true
-        tags:
-          task: image-builder
-          stage: deployment
-          purpose: jenkins
-        volumes:
-          - device_name: /dev/sda1
-            ebs:
-              volume_size: 16
-              delete_on_termination: true
-      register: jenkins_host
-
-- name: Add the jenkins installation to the jenkins instance
-  hosts: tag_purpose_jenkins
-  become: true
-  
-  vars:
-    jenkins_package_state: latest
-    jenkins_hostname: "{{ inventory_hostname }}"
-    jenkins_http_port: 8443
-    jenkins_admin_username: admin
-    jenkins_admin_password: "{{ input_admin_pass }}"
-    jenkins_plugins:
-      - blueocean
-    jenkins_plugins_install_dependencies: true
-    jenkins_plugins_state: latest
-    jenkins_prefer_lts: false
-    jenkins_java_options: "-Djenkins.install.runSetupWizard=false"
-    java_packages:
-      - openjdk-8-jdk
-    no_log: false
-      
-  roles:
-    - role: geerlingguy.java
-      when: "ansible_os_family == 'RedHat'"
-      java_packages:
-        - java-1.8.0-openjdk      
-    - geerlingguy.jenkins
+    - name: test for centos 8 image
+      ansible.builtin.debug:
+        var: centos_8_image

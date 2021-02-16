@@ -1,0 +1,69 @@
+---
+- name: Identify the community AMI for CentOS
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    centos_version:
+      Stream8: "CentOS Stream 8 {{ arch }}"
+      CentOS8: "CentOS 8.3.2011 {{ arch }}"
+      CentOS7: "CentOS 7.9.2009 {{ arch }}"
+    stage: devel
+    vpcId: vpc-beb418d5
+    subnetId: subnet-bb9b99c1
+    ami:
+      Id: ami-0a75b786d9a7f8144
+      Name: "CentOS 7.9.*"
+      owner_id: "125523088429"
+    arch: x86_64
+#     boto_profile: ansible
+    aws_instance_role: jenkins-ec2-role
+    aws_instance_type: m5.large
+    aws_region: us-east-2
+  tasks:
+  - name: Set the architecture for arm64
+    set_fact:
+      architecture: aarch64
+    when: arch == "arm64"
+  - name: Set the architecture for x86_64
+    set_fact:
+      architecture: x86_64
+    when: arch == "x86_64"
+
+  - name: "Get the Details for {{ centos_version.Stream8 }}"
+    ec2_ami_info:
+      owners: "{{ ami.owner_id }}"
+      region: "{{ aws_region }}"
+      filters:
+        name: "CentOS Stream 8 {{ architecture }}"
+        architecture: "{{ arch }}"
+      profile: "{{ boto_profile | default(omit) }}"
+    register: stream_8_images
+  - name: "Get the Details for {{ centos_version.CentOS8 }}"
+    ec2_ami_info:
+      owners: "{{ ami.owner_id }}"
+      region: "{{ aws_region }}"
+      filters:
+        name: "CentOS 8.3.2011 {{ architecture }}"
+        architecture: "{{ arch }}"
+      profile: "{{ boto_profile | default(omit) }}"
+    register: centos_8_images
+  - name: "Get the Details for {{ centos_version.CentOS7 }}"
+    ec2_ami_info:
+      owners: "{{ ami.owner_id }}"
+      region: "{{ aws_region }}"
+      filters:
+        name: "CentOS 7.9.2009 {{ architecture }}"
+        architecture: "{{ arch }}"
+      profile: "{{ boto_profile | default(omit) }}"
+    register: centos_7_images
+
+  - name: Report the images
+    set_fact:
+      stream_8_image: "{{ stream_8_images.images[-1].image_id }}"
+      centos_8_image: "{{ centos_8_images.images[-1].image_id }}"
+      centos_7_image: "{{ centos_7_images.images[-1].image_id }}"
+      stream_8_snapshot: "{{ stream_8_images | community.general.json_query('images[-1].block_device_mappings[?device_name == `/dev/sda1`].ebs | [-1].snapshot_id') }}"
+      centos_8_snapshot: "{{ centos_8_images | community.general.json_query('images[-1].block_device_mappings[?device_name == `/dev/sda1`].ebs | [-1].snapshot_id') }}"
+      centos_7_snapshot: "{{ centos_7_images | community.general.json_query('images[-1].block_device_mappings[?device_name == `/dev/sda1`].ebs | [-1].snapshot_id') }}"

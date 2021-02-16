@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ansible==2.9.13
 awscli==1.18.130
 boto3==1.14.53
@@ -34,3 +35,16 @@ stevedore==3.2.1
 susepubliccloudinfo==1.2.1
 urllib3==1.25.10
 zipp==3.1.0
+||||||| merged common ancestors
+=======
+ansible
+awscli
+boto3
+botocore
+jenkins-job-builder
+python-jenkins
+PyYAML
+requests
+susepubliccloudinfo
+openpyxl
+>>>>>>> image-builder-7-fix
