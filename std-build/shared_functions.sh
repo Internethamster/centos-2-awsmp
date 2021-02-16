@@ -8,12 +8,12 @@ exit_abnormal() {
 }
 
 
-while getopts ":v:b:k:a:n:r:R:p" options; do
+while getopts ":v:b:k:a:n:r:R:dp" options; do
     case "${options}" in
         v)
             VERSION=${OPTARG}
             ;;
-        t)
+        b) 
             S3_BUCKET=${OPTARG}
             ;;
         k)
@@ -33,6 +33,9 @@ while getopts ":v:b:k:a:n:r:R:p" options; do
             ;;
         d)
             DRY_RUN="--dry-run"
+            ;;
+        p)
+            PSTATE="true"
             ;;
         :)
             "Error: -${OPTARG} requires an argument"
