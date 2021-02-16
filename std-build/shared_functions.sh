@@ -2,6 +2,10 @@ usage() {
     echo "Usage: $0 [ -v VERSION ] [ -b BUCKET_NAME ] [ -k OBJECT_PREFIX ] [ -a ARCH ] [ -n NAME ] [ -r RELEASE ] [ -R REGION ] [ -d DRY_RUN ]" 1>&2
 }
 
+function err() {
+    echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
+}
+
 exit_abnormal() {
     usage
     exit 1
