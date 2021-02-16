@@ -2,37 +2,26 @@
 # CENTOS-7 BUILDER
 set -x -euo pipefail
 
+NAME="CentOS-7"
+ARCH="x86_64"
+RELEASE="2003"
+
+S3_PREFIX="disk-images"
+S3_BUCKET="aws-marketplace-upload-centos"
 
 VERSION="FIXME"
 DATE=$(date +%Y%m%d)
-FILE="${NAME}-${ARCH}-GenericCloud-${RELEASE}.qcow2"
-LINK="http://cloud.centos.org/centos/7/images/${FILE}.xz"
 
 
 source ./shared_functions.sh
 
 
-if [[ -z $NAME ]] ; then
-    NAME="CentOS-7"
-fi
-if [[ -z $ARCH ]] ; then
-    ARCH="x86_64"
-fi
-if [[ -z $RELEASE ]]; then
-    RELEASE="2003"
-fi
-
-if [[ -z $S3_BUCKET ]]; then
-    S3_BUCKET="aws-marketplace-upload-centos"
-fi
-
-if [[ -z $S3_PREFIX ]]; then
-    S3_PREFIX="disk-images"
-fi
-
 if [[ -z $REGION ]]; then
     exit_abnormal
 fi
+
+FILE="${NAME}-${ARCH}-GenericCloud-${RELEASE}.qcow2"
+LINK="http://cloud.centos.org/centos/7/images/${FILE}.xz"
 
 SUBNET_ID=$(get_default_vpc_subnet $REGION)
 SECURITY_GROUP_ID=$(get_default_sg_for_vpc $REGION)
