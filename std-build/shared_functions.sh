@@ -10,7 +10,10 @@ exit_abnormal() {
     usage
     exit 1
 }
-
+function get_s3_bucket_location () {
+    local BUCKET_NAME=$BUCKET_NAME
+    aws s3api get-bucket-location --bucket $BUCKET_NAME --query 'LocationConstraint' --output text
+}
 
 while getopts ":v:b:k:a:n:r:R:dp" options; do
     case "${options}" in

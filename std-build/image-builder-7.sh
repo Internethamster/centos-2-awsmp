@@ -25,6 +25,7 @@ LINK="http://cloud.centos.org/centos/7/images/${FILE}.xz"
 
 SUBNET_ID=$(get_default_vpc_subnet $REGION)
 SECURITY_GROUP_ID=$(get_default_sg_for_vpc $REGION)
+S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
 if [ ! -e ${NAME}-${DATE}.txt ]; then
     echo "0" > ${NAME}-${DATE}.txt
@@ -64,7 +65,7 @@ virt-sysprep -a ./${IMAGE_NAME}.raw
 err "Cleaned up the volume in preparation for the AWS Marketplace"
 err "Upload ${IMAGE_NAME}.raw image to S3://${S3_BUCKET}/${S3_PREFIX}/"
 
-aws s3 cp ./${IMAGE_NAME}.raw  s3://${S3_BUCKET}/${S3_PREFIX}/
+aws --region $S3_REGION s3 cp ./${IMAGE_NAME}.raw  s3://${S3_BUCKET}/${S3_PREFIX}/
 rm ${IMAGE_NAME}.raw
 
 DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
@@ -82,7 +83,7 @@ do
 done
 err "Import snapshot task is complete" 
 
-snapshotId=$(aws ec2 describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
+snapshotId=$(aws ec2 --region $REGION describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
 
 err "Created snapshot: $snapshotId" 
 
