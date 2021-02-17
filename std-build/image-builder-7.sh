@@ -2,6 +2,7 @@
 # CENTOS-7 BUILDER
 set -x -euo pipefail
 
+DRY_RUN=""
 NAME="CentOS-7"
 ARCH="x86_64"
 RELEASE="2009"
