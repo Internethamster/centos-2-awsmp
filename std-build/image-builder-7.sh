@@ -23,10 +23,10 @@ fi
 FILE="${NAME}-${ARCH}-GenericCloud-${RELEASE}.qcow2"
 LINK="http://cloud.centos.org/centos/7/images/${FILE}.xz"
 
-SUBNET_ID=$(get_default_vpc_subnet $REGION)
-SECURITY_GROUP_ID=$(get_default_sg_for_vpc $REGION)
-
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
+
+SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
+SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
 
 if [ ! -e ${NAME}-${DATE}.txt ]; then
     echo "0" > ${NAME}-${DATE}.txt
@@ -71,20 +71,20 @@ rm ${IMAGE_NAME}.raw
 
 DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
 
-IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${NAME}-$(date +%s) --description "Import Base ${NAME} ${ARCH} Image" --disk-container $DISK_CONTAINER)
+IMPORT_SNAP=$(aws ec2 import-snapshot --region $S3_REGION --client-token ${NAME}-$(date +%s) --description "Import Base ${NAME} ${ARCH} Image" --disk-container $DISK_CONTAINER)
 err "snapshot suceessfully imported to $IMPORT_SNAP"
 
 snapshotTask=$(echo $IMPORT_SNAP | jq -Mr '.ImportTaskId')
 
-while [[ "$(aws ec2 describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]] 
+while [[ "$(aws ec2 --REGION $S3_REGION describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]] 
 do
-    aws ec2 --region $REGION describe-import-snapshot-tasks --import-task-ids $snapshotTask
+    aws ec2 --region $S3_REGION describe-import-snapshot-tasks --import-task-ids $snapshotTask
     err "import snapshot is still active."
     sleep 60
 done
 err "Import snapshot task is complete" 
 
-snapshotId=$(aws ec2 --region $REGION describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
+snapshotId=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
 
 err "Created snapshot: $snapshotId" 
 
@@ -94,7 +94,7 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 
 err $DEVICE_MAPPINGS
 
-ImageId=$(aws ec2 register-image --region $REGION --architecture=x86_64 \
+ImageId=$(aws ec2 register-image --region $S3_REGION --architecture=x86_64 \
 	      	      --description="${NAME}-${RELEASE}-${DATE}_${VERSION} (${ARCH}) for HVM Instances"\
 	      	      --virtualization-type hvm  \
 		      --root-device-name '/dev/sda1' \
@@ -107,7 +107,7 @@ err "Produced Image ID $ImageId"
 echo "SNAPSHOT : ${snapshotId}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${RELEASE}.txt
 err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5.large --key-name previous --security-group-ids $SECURITY_GROUP_ID"
 
-aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5.large --key-name "previous" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
+aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5.large --key-name "previous" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
     rm -f ./${IMAGE_NAME}.raw
 
 # Share AMI with AWS Marketplace

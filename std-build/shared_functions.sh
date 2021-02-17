@@ -20,7 +20,7 @@ while getopts ":v:b:k:a:n:r:R:dp" options; do
         v)
             VERSION=${OPTARG}
             ;;
-        b) 
+        b)
             S3_BUCKET=${OPTARG}
             ;;
         k)
@@ -65,4 +65,3 @@ get_default_sg_for_vpc () {
     local VPC_ID=$(aws ec2 describe-vpcs --region $REGION --query "Vpcs[?IsDefault].VpcId" --output text)
     aws ec2 describe-security-groups --region $REGION --filters "Name=vpc-id,Values=${VPC_ID}" --query 'SecurityGroups[?GroupName == `default`].GroupId' --output text
 }
-
