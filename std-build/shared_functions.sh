@@ -11,7 +11,7 @@ exit_abnormal() {
     exit 1
 }
 function get_s3_bucket_location () {
-    local BUCKET_NAME=$BUCKET_NAME
+    local BUCKET_NAME=$1
     aws s3api get-bucket-location --bucket $BUCKET_NAME --query 'LocationConstraint' --output text
 }
 
