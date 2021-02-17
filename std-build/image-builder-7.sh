@@ -21,7 +21,7 @@ if [[ -z $REGION ]]; then
 fi
 
 FILE="${NAME}-${ARCH}-GenericCloud-${RELEASE}.qcow2"
-LINK="http://cloud.centos.org/centos/7/images/${FILE}.xz"
+LINK="http://cloud.centos.org/centos/7/images/${FILE}"
 
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
@@ -39,14 +39,26 @@ fi
 
 
 IMAGE_NAME="${NAME}-${RELEASE}-${DATE}_${VERSION}.${ARCH}"
+if [[ $(curl -Is ${LINK}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
+   then
+       err "$LINK to be retrieved and saved at ./${FILE}.xz"
+       curl -C - -o ${FILE}.xz ${LINK}.xz
+       FILE_STATE="COMPRESSED"
+elif [[ $(curl -Is ${LINK} | awk '/HTTP/ { print $2 }') == 200 ]]
+then
+       err "$LINK to be retrieved and saved at ./${FILE}"
+       curl -C - -o ${FILE} ${LINK}
+       FILE_STATE="NORMAL"
+else
+    err "$FILE was not located"
+    exit_abnormal
+fi
 
-err "$LINK to be retrieved and saved at ./${FILE}.xz"
-curl -C - -o ${FILE}.xz ${LINK}
-
-
-err "xz -d ${FILE}.xz"
-xz -d --force ${FILE}.xz
-
+if [[ "$FILE_STATE" == "COMPRESSED" ]]
+   then
+       err "xz -d ${FILE}.xz"
+       xz -d --force ${FILE}.xz && FILE_STATE="NORMAL"
+fi
 err "${NAME}-${RELEASE}-${DATE}.$ARCH.raw created" 
 qemu-img convert \
          ./${FILE} ${IMAGE_NAME}.raw && rm ${FILE}
