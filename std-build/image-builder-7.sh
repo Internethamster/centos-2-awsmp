@@ -17,7 +17,8 @@ DATE=$(date +%Y%m%d)
 source ./shared_functions.sh
 
 
-if [[ -z $REGION ]]; then
+if [[ -z $REGION ]]
+then
     exit_abnormal
 fi
 
@@ -33,11 +34,11 @@ if [ ! -e ${NAME}-${DATE}.txt ]; then
     echo "0" > ${NAME}-${DATE}.txt
 fi
 
-if [ "$VERSION" == "FIXME" ]; then
+if [ "$VERSION" == "FIXME" ]
+then
     echo $(( $(cat ${NAME}-${DATE}.txt) + 1 )) > ${NAME}-${DATE}.txt
     VERSION=$(cat ${NAME}-${DATE}.txt)
 fi
-
 
 IMAGE_NAME="${NAME}-${RELEASE}-${DATE}_${VERSION}.${ARCH}"
 if [[ $(curl -Is ${LINK}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
@@ -60,26 +61,29 @@ if [[ "$FILE_STATE" == "COMPRESSED" ]]
        err "xz -d ${FILE}.xz"
        xz -d --force ${FILE}.xz && FILE_STATE="NORMAL"
 fi
-err "${NAME}-${RELEASE}-${DATE}.$ARCH.raw created" 
-qemu-img convert \
-         ./${FILE} ${IMAGE_NAME}.raw && rm ${FILE}
+
+qemu-img convert ./${FILE} ${IMAGE_NAME}.raw && rm ${FILE}
+err "${IMAGE_NAME}.raw created" 
 
 virt-edit ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
 
-virt-customize -a ./${IMAGE_NAME}.raw --update --install cloud-init
-err "virt-customize -a ./${IMAGE_NAME}.raw --update --install cloud-init"
+virt-customize -a ./${IMAGE_NAME}.raw --update
+err "virt-customize -a ./${IMAGE_NAME}.raw --update"
 
 virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel
 err "virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel" 
 
-err "upgrading the current packages for the instance: ${IMAGE_NAME}"
+virt-edit -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1enforcing/"
+err "Modified ./${IMAGE_NAME}.raw to make it enforcing"
+
 virt-sysprep -a ./${IMAGE_NAME}.raw
+err "upgrading the current packages for the instance: ${IMAGE_NAME}"
 
 err "Cleaned up the volume in preparation for the AWS Marketplace"
-err "Upload ${IMAGE_NAME}.raw image to S3://${S3_BUCKET}/${S3_PREFIX}/"
 
 aws --region $S3_REGION s3 cp ./${IMAGE_NAME}.raw  s3://${S3_BUCKET}/${S3_PREFIX}/
+err "Upload ${IMAGE_NAME}.raw image to S3://${S3_BUCKET}/${S3_PREFIX}/"
 rm ${IMAGE_NAME}.raw
 
 DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
@@ -111,7 +115,7 @@ ImageId=$(aws ec2 register-image --region $S3_REGION --architecture=x86_64 \
 	      	      --description="${NAME}-${RELEASE}-${DATE}_${VERSION} (${ARCH}) for HVM Instances"\
 	      	      --virtualization-type hvm  \
 		      --root-device-name '/dev/sda1' \
-		      --name=${NAME}-${RELEASE}-${DATE}.$ARCH \
+                      --name=${IMAGE_NAME} \
 		      --ena-support --sriov-net-support simple \
 		      --block-device-mappings "${DEVICE_MAPPINGS}" \
 		      --output text)
@@ -120,8 +124,7 @@ err "Produced Image ID $ImageId"
 echo "SNAPSHOT : ${snapshotId}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${RELEASE}.txt
 err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5.large --key-name previous --security-group-ids $SECURITY_GROUP_ID"
 
-aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5.large --key-name "previous" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
-    rm -f ./${IMAGE_NAME}.raw
+aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5.large --key-name "previous" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN 
 
 # Share AMI with AWS Marketplace
 # err "./share-amis.sh $snapshotId $ImageId"
