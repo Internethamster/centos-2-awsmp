@@ -4,7 +4,7 @@ set -x -euo pipefail
 
 NAME="CentOS-7"
 ARCH="x86_64"
-RELEASE="2003"
+RELEASE="2009"
 
 S3_PREFIX="disk-images"
 S3_BUCKET="aws-marketplace-upload-centos"
@@ -25,6 +25,7 @@ LINK="http://cloud.centos.org/centos/7/images/${FILE}.xz"
 
 SUBNET_ID=$(get_default_vpc_subnet $REGION)
 SECURITY_GROUP_ID=$(get_default_sg_for_vpc $REGION)
+
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
 if [ ! -e ${NAME}-${DATE}.txt ]; then
