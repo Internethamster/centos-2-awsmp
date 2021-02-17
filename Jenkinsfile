@@ -1,5 +1,5 @@
-pipeline { 
-    agent any 
+pipeline {
+    agent any
     options {
         skipStagesAfterUnstable()
     }
@@ -14,13 +14,15 @@ pipeline {
             steps {
               sh '''cd std-build
                     chmod +x ./image-builder-7.sh
-                    ./image-builder-7.sh -b aws-marketplace-upload-centos -k disk-images -R us-east-2'''  
+                    ./image-builder-7.sh -b aws-marketplace-upload-centos -k disk-images -R us-east-2 -v 2'''
+              archiveArtifacts artifacts: 'CentOS-7-*.txt', followSymlinks: false
             }
+
         }
         stage('Deploy Image Builder 8') {
             steps {
                 sh 'chmod +x ./image-builder-8.sh -b aws-marketplace-upload-centos -k disk-images'
-                sh './image-builder-8.sh'            
+                sh './image-builder-8.sh'
             }
         }
     }
