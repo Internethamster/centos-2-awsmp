@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x 
+set -x
 REGION=us-east-1
 ImageId=$1
 snapshotId=$(aws ec2 describe-images --region $REGION --owners self --image-ids $ImageId --query 'Images[].BlockDeviceMappings[].Ebs.SnapshotId' --output text)
