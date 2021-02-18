@@ -15,7 +15,7 @@ pipeline {
               sh '''cd std-build
                     chmod +x ./image-builder-7.sh
                     ./image-builder-7.sh -b aws-marketplace-upload-centos -k disk-images -R us-east-2 -v 2'''
-              archiveArtifacts artifacts: 'CentOS-7-*.txt', followSymlinks: false
+              archiveArtifacts artifacts: 'std-build/CentOS-7-*.txt', followSymlinks: false
             }
 
         }
