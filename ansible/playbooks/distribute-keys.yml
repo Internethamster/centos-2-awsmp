@@ -1,0 +1,16 @@
+---  #-*- mode: ansible -*-
+- name: Build a series of test keys across all regions
+  hosts: localhost
+  gather_facts: no
+
+  vars:
+    aws_key_name: testkey
+
+
+  pre_tasks:
+    - name: Build an array of regions names
+      amazon.aws.aws_region_info:
+        profile: "{{ profile | default(omit) }}"
+        region: "{{ region | default(omit) }}"
+        state: "{{ state | default('present') }}"
+      register: region_info_array
