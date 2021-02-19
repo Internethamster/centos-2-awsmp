@@ -7,6 +7,7 @@ DRY_RUN=""
 MAJOR_RELEASE=8
 NAME="CentOS-${MAJOR_RELEASE}"
 ARCH="x86_64"
+RELEASE=3.2011
 MINOR_RELEASE="3.2011-20201204.2"
 
 VERSION="FIXME"
@@ -43,7 +44,7 @@ then
     VERSION=$(cat ${NAME}-${DATE}.txt)
 fi
 
-IMAGE_NAME="${NAME}.${MINOR_RELEASE}-${DATE}_${VERSION}.${ARCH}"
+IMAGE_NAME="${NAME}.${RELEASE}-${DATE}.${VERSION}.${ARCH}"
 
 if [[ $(curl -Is ${LINK}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
    then
