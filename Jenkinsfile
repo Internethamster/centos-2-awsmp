@@ -14,7 +14,7 @@ pipeline {
             steps {
               sh '''cd std-build
                     chmod +x ./image-builder-7.sh
-                    ./image-builder-7.sh -b aws-marketplace-upload-centos -k disk-images -R us-east-2 -v 3'''
+                    ./image-builder-7.sh -b aws-marketplace-upload-centos -k disk-images -R us-east-2 -v $BUILD_ID'''
               archiveArtifacts artifacts: 'std-build/CentOS-7-*.txt', followSymlinks: false
             }
 
@@ -23,7 +23,7 @@ pipeline {
             steps {
                 sh '''cd std-build 
                    chmod +x ./image-builder-8.sh
-                   ./image-builder-8.sh -b aws-marketplace-upload-centos -k disk-images -R us-east-2 -v 1'''
+                   ./image-builder-8.sh -b aws-marketplace-upload-centos -k disk-images -R us-east-2 -v $BUILD_ID'''
                 archiveArtifacts artifacts: 'std-build/CentOS-8-*.txt', followSymlinks: false
             }
         }
