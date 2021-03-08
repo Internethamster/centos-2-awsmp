@@ -75,15 +75,9 @@
     jenkins_java_options: "-Djenkins.install.runSetupWizard=false"
     java_packages:
       - openjdk-8-jdk
-    no_log: false
+    no_log: true
 
-  roles:
-    - role: geerlingguy.java
-      when: "ansible_os_family == 'RedHat'"
-      java_packages:
-        - java-1.8.0-openjdk
-    - geerlingguy.jenkins
-  tasks:
+  pre-tasks:
     - name: Add support for image builds
       yum:
         name:
@@ -97,7 +91,12 @@
           - libguestfs-bash-completion
           - nvme-cli
         state: present
-
+  roles:
+    - role: geerlingguy.java
+      when: "ansible_os_family == 'RedHat'"
+      java_packages:
+        - java-1.8.0-openjdk
+    - geerlingguy.jenkins
     - name: Add support for builds after epel is installed
       yum:
         name:

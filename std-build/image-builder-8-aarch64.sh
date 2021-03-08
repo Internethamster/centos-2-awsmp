@@ -1,42 +1,48 @@
 #!/bin/bash
 set -x -eu -o pipefail
+MAJOR_RELEASE="8"
+MINOR_RELEASE="3.2011"
+CPE_RELEASE_DATE="20201204"
+CPE_RELEASE_REVISION="2"
 RELEASE=$1
+BUCKET_NAME=aws-marketplace-upload-centos
+OBJECT_KEY="disk-images/"
 DATE=$(date +%Y%m%d)
-REGION=us-west-2
+REGION=us-east-1
 SUBNET_ID=subnet-f87a20d3
 SECURITY_GROUP_ID=sg-973546bc
 DRY_RUN="--dry-run"
-NAME="CentOS-8-ec2-8.2.2004"
+NAME="CentOS-${MAJOR_RELEASE}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}"
 BUILD_DATE=$(date +%Y%m%d)
-IMAGE="CentOS-8-ec2-8.2.2004-20200611.2"
-ARCH="aarch64"
-ARCHITECTURE="arm64"
-LINK="http://cloud.centos.org/centos/8/${ARCH}/images/${IMAGE}.${ARCH}.qcow2"
+IMAGE="${NAME}-${CPE_RELEASE_DATE}.${CPE_RELEASE_REVISION}"
+ARCH=$(arch)
+if [[ "$ARCH" == "aarch64" ]]; then
+    ARCHITECTURE="arm64"
+else
+    ARCHITECTURE="$(arch)"
+fi
 
+GenericImage="http://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${NAME}-${CPE_RELEASE_DATE}.${CPE_RELEASE_REVISION}.${ARCH}.qcow2"
+LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${IMAGE}.${ARCH}.qcow2"
 
-
-GenericImage="http://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2"
 
 function err() {
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
 }
 
+RAW_DISK_NAME="${NAME}-${BUILD_DATE}.${RELEASE}.${ARCHITECTURE}"
+err "$RAW_DISK_NAME will be created from $LINK" 
 
+curl -C - -o ${RAW_DISK_NAME}.qcow2 $LINK
+err "$LINK retrieved and saved at $(pwd)/${RAW_DISK_NAME}.qcow2"
 
-taskset 1 curl -C - -o ${NAME}-${ARCHITECTURE}.qcow2 http://cloud.centos.org/centos/8/${ARCH}/images/${NAME}-20200611.2.${ARCH}.qcow2
-
-err "$LINK retrieved and saved at $(pwd)/${NAME}-${ARCHITECTURE}.qcow2"
-
-RAW_DISK_NAME="${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}"
-err "$RAW_DISK_NAME created" 
-taskset 1 qemu-img convert \
-	 ./${NAME}-${ARCHITECTURE}.qcow2 ${RAW_DISK_NAME}.raw
+taskset -c 0 qemu-img convert \
+	 ./${RAW_DISK_NAME}.qcow2 ${RAW_DISK_NAME}.raw
 
 err "Modified ./${RAW_DISK_NAME}.raw to make it permissive"
-virt-edit ./${RAW_DISK_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
-
-err "virt-customize -a ./${RAW_DISK_NAME}.raw  --update --install cloud-init"
-virt-customize -a ./${RAW_DISK_NAME}.raw  --update --install cloud-init
+taskset -c 0 virt-edit ./${RAW_DISK_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
+err "virt-customize -a ./${RAW_DISK_NAME}.raw  --update
+taskset -c 1 virt-customize -a ./${RAW_DISK_NAME}.raw --update
 
 # virt-edit ./${RAW_DISK_NAME}.raw  /etc/cloud/cloud.cfg -e "s/name: centos/name: ec2-user/"
 # err "Modified Image to move centos to ec2-user"
@@ -44,15 +50,19 @@ virt-customize -a ./${RAW_DISK_NAME}.raw  --update --install cloud-init
 err "virt-customize -a ./${RAW_DISK_NAME}.raw --selinux relabel" 
 virt-customize -a ./${RAW_DISK_NAME}.raw --selinux-relabel
 
+err "Modified ./${RAW_DISK_NAME}.raw to make it enforcing"
+taskset -c 1 virt-edit ./${RAW_DISK_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1enforcing/"
+
 err "upgrading the current packages for the instance: ${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}"
 virt-sysprep -a ./${RAW_DISK_NAME}.raw
 
 err "Cleaned up the volume in preparation for the AWS Marketplace"
-err "Upload ${RAW_DISK_NAME}.raw image to S3://aws-marketplace-upload-centos/disk-images/"
+err "Upload ${RAW_DISK_NAME}.raw image to s3://aws-marketplace-upload-centos/disk-images/"
 aws s3 cp ./${RAW_DISK_NAME}.raw  s3://aws-marketplace-upload-centos/disk-images/
 
 DISK_CONTAINER="Description=${IMAGE},Format=raw,UserBucket={S3Bucket=aws-marketplace-upload-centos,S3Key=disk-images/${RAW_DISK_NAME}.raw}"
-IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${NAME}-$(date +%s) --description "Import Base CentOS8 X86_64 Image" --disk-container $DISK_CONTAINER)
+
+IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${NAME}-$(date +%s) --description "Import Base CentOS8 ${ARCHITECTURE} Image" --disk-container $DISK_CONTAINER)
 err "snapshot suceessfully imported to $IMPORT_SNAP"
 
 snapshotTask=$(echo $IMPORT_SNAP | jq -Mr '.ImportTaskId')
@@ -74,17 +84,20 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 
 err $DEVICE_MAPPINGS
 
-ImageId=$(aws ec2 register-image --region $REGION --architecture=x86_64 \
-	      --description='CentOS 8.2.2004 (x86_64) for HVM Instances' --virtualization-type hvm  \
-	      --root-device-name '/dev/sda1'     --name=${NAME}-${DATE}-${RELEASE}.${ARCHITECTURE}     --ena-support --sriov-net-support simple \
+ImageId=$(aws ec2 register-image --region us-east-1 --architecture=$ARCHITECTURE \
+	      --description="${NAME} (${ARCHITECTURE}) for HVM Instances" --virtualization-type hvm  \
+	      --root-device-name '/dev/sda1'     --name=${RAW_DISK_NAME} \
+	      --ena-support --sriov-net-support simple \
 	      --block-device-mappings "${DEVICE_MAPPINGS}" \
 	      --output text)
 
 err "Produced Image ID $ImageId"
 
-err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m5.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
-aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m5.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
+err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m6g.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
+aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m6g.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
     rm -f ./${RAW_DISK_NAME}.raw
+    rm -f ./${RAW_DISK_NAME}.qcow2
+
 
 # Share AMI with AWS Marketplace
 aws ec2 modify-snapshot-attribute \
@@ -98,5 +111,5 @@ aws ec2 modify-image-attribute \
     --image-id $ImageId  \
     --region $REGION \
     --attribute launchPermission \
-    --user-ids "Add=[{UserId=679593333241}, {UserId=684062674729}, {UserId=425685993791}]"
-
+    --operation-type add \
+    --user-ids 679593333241 684062674729 425685993791
