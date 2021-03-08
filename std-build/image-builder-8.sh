@@ -27,8 +27,7 @@ then
 fi
 
 FILE="${NAME}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}.${ARCH}.qcow2"
-LINK="http://cloud.centos.org/centos/8/$ARCH/images/${FILE}"
-
+LINK="https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2" 
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
 SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
@@ -67,9 +66,9 @@ if [[ "$FILE_STATE" == "COMPRESSED" ]]
        xz -d --force ${FILE}.xz && FILE_STATE="NORMAL"
 fi
 
-err "$LINK retrieved and saved at $(pwd)/${FILE}.qcow2"
+err "$LINK retrieved and saved at $(pwd)/${FILE}"
 
-qemu-img convert ./${FILE} ${IMAGE_NAME}.raw && rm ${FILE}
+qemu-img convert ./${FILE} ${IMAGE_NAME}.raw && rm -f ${FILE}
 err "${IMAGE_NAME}.raw created"
 
 virt-edit -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
