@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent x86_64
     options {
         skipStagesAfterUnstable()
     }
