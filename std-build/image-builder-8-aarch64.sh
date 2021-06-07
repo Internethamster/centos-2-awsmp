@@ -1,9 +1,9 @@
 #!/bin/bash
 set -x -eu -o pipefail
 MAJOR_RELEASE="8"
-MINOR_RELEASE="3.2011"
-CPE_RELEASE_DATE="20201204"
-CPE_RELEASE_REVISION="2"
+MINOR_RELEASE="4.2105"
+CPE_RELEASE_DATE="20210603"
+CPE_RELEASE_REVISION="0"
 RELEASE=$1
 BUCKET_NAME=aws-marketplace-upload-centos
 OBJECT_KEY="disk-images/"
@@ -21,7 +21,7 @@ if [[ "$ARCH" == "aarch64" ]]; then
 else
     ARCHITECTURE="$(arch)"
 fi
-
+# CentOS-8-ec2-8.4.2105-20210603.0.aarch64.qcow2
 GenericImage="http://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${NAME}-${CPE_RELEASE_DATE}.${CPE_RELEASE_REVISION}.${ARCH}.qcow2"
 LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${IMAGE}.${ARCH}.qcow2"
 
