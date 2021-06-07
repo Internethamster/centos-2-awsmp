@@ -4,11 +4,11 @@ MAJOR_RELEASE="8"
 MINOR_RELEASE="4.2105"
 CPE_RELEASE_DATE="20210603"
 CPE_RELEASE_REVISION="0"
-RELEASE=$1
+RELEASE=${1:-0}
 BUCKET_NAME=aws-marketplace-upload-centos
-OBJECT_KEY="disk-images/"
+OBJECT_KEY='disk-images/'
 DATE=$(date +%Y%m%d)
-REGION=us-east-1
+REGION=us-west-2
 SUBNET_ID=subnet-f87a20d3
 SECURITY_GROUP_ID=sg-973546bc
 DRY_RUN="--dry-run"
@@ -22,7 +22,7 @@ else
     ARCHITECTURE="$(arch)"
 fi
 # CentOS-8-ec2-8.4.2105-20210603.0.aarch64.qcow2
-GenericImage="http://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${NAME}-${CPE_RELEASE_DATE}.${CPE_RELEASE_REVISION}.${ARCH}.qcow2"
+# GenericImage="http://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${NAME}-${CPE_RELEASE_DATE}.${CPE_RELEASE_REVISION}.${ARCH}.qcow2"
 LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${IMAGE}.${ARCH}.qcow2"
 
 
@@ -40,8 +40,8 @@ taskset -c 0 qemu-img convert \
 	 ./${RAW_DISK_NAME}.qcow2 ${RAW_DISK_NAME}.raw
 
 err "Modified ./${RAW_DISK_NAME}.raw to make it permissive"
-taskset -c 0 virt-edit ./${RAW_DISK_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
-err "virt-customize -a ./${RAW_DISK_NAME}.raw  --update
+taskset -c 0 virt-edit ./${RAW_DISK_NAME}.raw /etc/sysconfig/selinux -e 's/^\(SELINUX=\).*/\1permissive/'
+err "virt-customize -a ./${RAW_DISK_NAME}.raw  --update"
 taskset -c 1 virt-customize -a ./${RAW_DISK_NAME}.raw --update
 
 # virt-edit ./${RAW_DISK_NAME}.raw  /etc/cloud/cloud.cfg -e "s/name: centos/name: ec2-user/"
@@ -78,13 +78,23 @@ snapshotId=$(aws ec2 describe-import-snapshot-tasks --import-task-ids ${snapshot
 
 err "Created snapshot: $snapshotId" 
 
+if [[ "$REGION" != "us-east-1" ]]
+then
+    
+    snapshotId=$(aws ec2 copy-snapshot --source-region $REGION --source-snapshot-id $snapshotId \
+        --destination-region us-east-1 \
+        --description "Import Base CentOS${MAJOR_RELEASE} ${ARCHITECTURE} Image" --output text)
+    REGION="us-east-1"
+    
+fi
+
 sleep 20
 
 DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTermination\":true, \"SnapshotId\":\"${snapshotId}\", \"VolumeSize\":10, \"VolumeType\":\"gp2\"}}]"
 
 err $DEVICE_MAPPINGS
 
-ImageId=$(aws ec2 register-image --region us-east-1 --architecture=$ARCHITECTURE \
+ImageId=$(aws ec2 register-image --region us-west-2 --architecture=$ARCHITECTURE \
 	      --description="${NAME} (${ARCHITECTURE}) for HVM Instances" --virtualization-type hvm  \
 	      --root-device-name '/dev/sda1'     --name=${RAW_DISK_NAME} \
 	      --ena-support --sriov-net-support simple \
@@ -94,9 +104,11 @@ ImageId=$(aws ec2 register-image --region us-east-1 --architecture=$ARCHITECTURE
 err "Produced Image ID $ImageId"
 
 err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m6g.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
-aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m6g.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
-    rm -f ./${RAW_DISK_NAME}.raw
-    rm -f ./${RAW_DISK_NAME}.qcow2
+
+aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID \
+    --image-id $ImageId --instance-type m6g.large --key-name "davdunc@amazon.com" \
+    --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
+    rm -f ./${RAW_DISK_NAME}.raw rm -f  ./${RAW_DISK_NAME}.qcow2
 
 
 # Share AMI with AWS Marketplace
