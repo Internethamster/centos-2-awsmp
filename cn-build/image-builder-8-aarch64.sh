@@ -1,16 +1,16 @@
 #!/bin/bash
-set -x -eu -o pipefail
+set -eu -o pipefail
 MAJOR_RELEASE="8"
 MINOR_RELEASE="4.2105"
 CPE_RELEASE_DATE="20210603"
 CPE_RELEASE_REVISION="0"
 RELEASE=${1:-0}
-BUCKET_NAME=aws-marketplace-upload-centos
+BUCKET_NAME="davdunc-floppy"
 OBJECT_KEY='disk-images/'
 DATE=$(date +%Y%m%d)
-REGION=us-west-2
-SUBNET_ID=subnet-f87a20d3
-SECURITY_GROUP_ID=sg-973546bc
+REGION=cn-northwest-1
+SUBNET_ID=subnet-0890b142
+SECURITY_GROUP_ID=sg-5993f530
 DRY_RUN="--dry-run"
 NAME="CentOS-${MAJOR_RELEASE}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}"
 BUILD_DATE=$(date +%Y%m%d)
