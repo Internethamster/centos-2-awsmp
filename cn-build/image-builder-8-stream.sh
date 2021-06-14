@@ -125,7 +125,14 @@ ImageId=$(aws ec2 register-image --region $REGION --architecture=$ARCHITECTURE \
 err "Produced Image ID $ImageId"
 echo "SNAPSHOT : ${snapshotId}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MINOR_RELEASE}.txt
 
+if [[ "$ARCHITECTURE" == "arm64" ]]
+then
+    INSTANCE_TYPE="c6g.large"
+else
+    INSTANCE_TYPE="c5n.large"
+fi
+
 err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
 aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID \
-    --image-id $ImageId --instance-type c5n.large --key-name "previous" \
+    --image-id $ImageId --instance-type $INSTANCE_TYPE --key-name "previous" \
     --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && rm -f ./${IMAGE_NAME}.raw
