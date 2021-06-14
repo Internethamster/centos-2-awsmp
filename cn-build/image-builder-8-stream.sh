@@ -58,14 +58,14 @@ err "${IMAGE_NAME}.raw created"
 
 CMD="virt-edit"
 if [[ "$ARCHITECTURE" == "arm64" ]]; then
-    CMD="taskset -c  $CMD"
+    CMD="taskset -c 0  $CMD"
 fi
 $CMD ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
 
 CMD="virt-customize"
 if [[ "$ARCHITECTURE" == "arm64" ]]; then
-    CMD="taskset -c  $CMD"
+    CMD="taskset -c 0 $CMD"
 fi
 $CMD -a ./${IMAGE_NAME}.raw  --update --install cloud-init
 err "virt-customize -a ./${IMAGE_NAME}.raw  --update --install cloud-init"
@@ -75,14 +75,14 @@ err "virt-customize -a ./${IMAGE_NAME}.raw  --update --install cloud-init"
 
 CMD=virt-customize
 if [[ "$ARCHITECTURE" == "arm64" ]]; then
-    CMD="taskset -c  $CMD"
+    CMD="taskset -c 0 $CMD"
 fi
 $CMD -a ./${IMAGE_NAME}.raw --selinux-relabel
 err "virt-customize -a ./${IMAGE_NAME}.raw --selinux relabel" 
 
 CMD=virt-sysprep
 if [[ "$ARCHITECTURE" == "arm64" ]]; then
-    CMD="taskset -c  $CMD"
+    CMD="taskset -c 0 $CMD"
 fi
 $CMD -a ./${IMAGE_NAME}.raw
 err "upgrading the current packages for the instance: ${IMAGE_NAME}"
@@ -116,8 +116,9 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 err $DEVICE_MAPPINGS
 
 ImageId=$(aws ec2 register-image --region $REGION --architecture=x86_64 \
-	      --description='${NAME}.${MINOR_RELEASE} ($ARCH) for HVM Instances' --virtualization-type hvm  \
-	      --root-device-name '/dev/sda1'     --name=${IMAGE_NAME}     --ena-support --sriov-net-support simple \
+	      --description='${NAME}.${MINOR_RELEASE} ($ARCH) for HVM Instances' \
+              --virtualization-type hvm --root-device-name '/dev/sda1' \
+              --name=${IMAGE_NAME} --ena-support --sriov-net-support simple \
 	      --block-device-mappings "${DEVICE_MAPPINGS}" \
 	      --output text)
 
