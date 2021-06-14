@@ -92,7 +92,7 @@ err "Cleaned up the volume in preparation for the AWS Marketplace"
 aws s3 cp ./${IMAGE_NAME}.raw  s3://davdunc-floppy/disk-images/
 err "Upload ${IMAGE_NAME}.raw image to S3://davdunc-floppy/disk-images/"
 
-DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=davdunc-floppy,S3Key=disk-images/${IMAGE_NAME}.raw}"
+DISK_CONTAINER="Description=\"${IMAGE_NAME}\",Format=raw,UserBucket={S3Bucket=davdunc-floppy,S3Key=disk-images/${IMAGE_NAME}.raw}"
 IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container $DISK_CONTAINER)
 err "snapshot suceessfully imported to $IMPORT_SNAP"
 
