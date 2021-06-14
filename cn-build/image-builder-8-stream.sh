@@ -1,7 +1,9 @@
 #!/bin/bash
 # CENTOS-8-STREAM BUILDER for CN
 set -euo pipefail
+
 MAJOR_RELEASE=8
+UPSTREAM_RELEASE="${MAJOR_RELEASE}-stream"
 NAME="CentOS-Stream-ec2-${MAJOR_RELEASE}"
 
 ARCH="$(arch)"
@@ -21,12 +23,12 @@ SUBNET_ID=subnet-0890b142
 SECURITY_GROUP_ID=sg-5993f530
 DRY_RUN="--dry-run"
 
-FILE="${NAME}-${MINOR_RELEASE}.${ARCH}"
-LINK="http://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/$ARCH/images/${FILE}.qcow2"
+UPSTREAM_FILE_NAME="${NAME}-${MINOR_RELEASE}.${ARCH}"
+BASE_URI="https://cloud.centos.org/centos"
 
 GenericImage="https://cloud.centos.org/centos/8-stream/aarch64/images/CentOS-Stream-ec2-8-20210603.0.aarch64.qcow2"
-LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${MINOR_RELEASE}.${ARCH}.qcow2"
-
+LINK="${BASE_URI}/${UPSTREAM_RELEASE}/$ARCH/images/${UPSTREAM_FILE_NAME}.qcow2"
+LINK2="${BASE_URI}/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${MINOR_RELEASE}.${ARCH}.qcow2"
 function err() {
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
 }
@@ -40,13 +42,13 @@ if [ "$VERSION" == "FIXME" ]; then
     VERSION=$(cat ${NAME}-${DATE}.txt)
 fi
 
-IMAGE_NAME="${NAME}.${MINOR_RELEASE}-${DATE}_${VERSION}.${ARCH}"
+IMAGE_NAME="${NAME}-${DATE}.${VERSION}.${ARCH}"
 
-curl -C - -o ${FILE}.qcow2 $LINK
+curl -C - -o ${UPSTREAM_FILE_NAME}.qcow2 $LINK
 
-err "$LINK retrieved and saved at $(pwd)/${FILE}.qcow2"
+err "$LINK retrieved and saved at $(pwd)/${UPSTREAM_FILE_NAME}.qcow2"
 
-qemu-img convert ./${FILE}.qcow2 ${IMAGE_NAME}.raw
+taskset -c 0 qemu-img convert ./${UPSTREAM_FILE_NAME}.qcow2 ${IMAGE_NAME}.raw
 err "${IMAGE_NAME}.raw created" 
 
 virt-edit ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
