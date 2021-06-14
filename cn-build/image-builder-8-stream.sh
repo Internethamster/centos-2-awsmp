@@ -116,7 +116,7 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 err $DEVICE_MAPPINGS
 
 ImageId=$(aws ec2 register-image --region $REGION --architecture=$ARCHITECTURE \
-	      --description='${NAME}.${MINOR_RELEASE} ($ARCH) for HVM Instances' \
+	      --description="${NAME}.${MINOR_RELEASE} ($ARCH) for HVM Instances" \
               --virtualization-type hvm --root-device-name '/dev/sda1' \
               --name=${IMAGE_NAME} --ena-support --sriov-net-support simple \
 	      --block-device-mappings "${DEVICE_MAPPINGS}" \
@@ -125,7 +125,14 @@ ImageId=$(aws ec2 register-image --region $REGION --architecture=$ARCHITECTURE \
 err "Produced Image ID $ImageId"
 echo "SNAPSHOT : ${snapshotId}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MINOR_RELEASE}.txt
 
+if [[ "$ARCHITECTURE" == "arm64" ]]
+then
+    INSTANCE_TYPE="c6g.large"
+else
+    INSTANCE_TYPE="c5n.large"
+fi
+
 err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
 aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID \
-    --image-id $ImageId --instance-type c5n.large --key-name "previous" \
+    --image-id $ImageId --instance-type $INSTANCE_TYPE --key-name "previous" \
     --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && rm -f ./${IMAGE_NAME}.raw
