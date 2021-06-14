@@ -48,22 +48,43 @@ curl -C - -o ${UPSTREAM_FILE_NAME}.qcow2 $LINK
 
 err "$LINK retrieved and saved at $(pwd)/${UPSTREAM_FILE_NAME}.qcow2"
 
-taskset -c 0 qemu-img convert ./${UPSTREAM_FILE_NAME}.qcow2 ${IMAGE_NAME}.raw
+CMD="qemu-img convert"
+if [[ "$ARCHITECTURE" == "arm64" ]]; then
+    CMD="taskset -c 0 $CMD"
+fi
+
+$CMD ./${UPSTREAM_FILE_NAME}.qcow2 ${IMAGE_NAME}.raw
 err "${IMAGE_NAME}.raw created" 
 
-virt-edit ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
+CMD="virt-edit"
+if [[ "$ARCHITECTURE" == "arm64" ]]; then
+    CMD="taskset -c  $CMD"
+fi
+$CMD ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
 
-virt-customize -a ./${IMAGE_NAME}.raw  --update --install cloud-init
+CMD="virt-customize"
+if [[ "$ARCHITECTURE" == "arm64" ]]; then
+    CMD="taskset -c  $CMD"
+fi
+$CMD -a ./${IMAGE_NAME}.raw  --update --install cloud-init
 err "virt-customize -a ./${IMAGE_NAME}.raw  --update --install cloud-init"
 
 # virt-edit ./${IMAGE_NAME}.raw  /etc/cloud/cloud.cfg -e "s/name: centos/name: ec2-user/"
 # err "Modified Image to move centos to ec2-user"
 
-virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel
+CMD=virt-customize
+if [[ "$ARCHITECTURE" == "arm64" ]]; then
+    CMD="taskset -c  $CMD"
+fi
+$CMD -a ./${IMAGE_NAME}.raw --selinux-relabel
 err "virt-customize -a ./${IMAGE_NAME}.raw --selinux relabel" 
 
-virt-sysprep -a ./${IMAGE_NAME}.raw
+CMD=virt-sysprep
+if [[ "$ARCHITECTURE" == "arm64" ]]; then
+    CMD="taskset -c  $CMD"
+fi
+$CMD -a ./${IMAGE_NAME}.raw
 err "upgrading the current packages for the instance: ${IMAGE_NAME}"
 
 err "Cleaned up the volume in preparation for the AWS Marketplace"
