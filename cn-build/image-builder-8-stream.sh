@@ -115,7 +115,7 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 
 err $DEVICE_MAPPINGS
 
-ImageId=$(aws ec2 register-image --region $REGION --architecture=x86_64 \
+ImageId=$(aws ec2 register-image --region $REGION --architecture=$ARCHITECTURE \
 	      --description='${NAME}.${MINOR_RELEASE} ($ARCH) for HVM Instances' \
               --virtualization-type hvm --root-device-name '/dev/sda1' \
               --name=${IMAGE_NAME} --ena-support --sriov-net-support simple \
