@@ -9,7 +9,7 @@ aws ec2 modify-image-attribute \
     --region $REGION \
     --attribute launchPermission \
     --operation-type add \
-    --user-ids 679593333241 684062674729 425685993791 425685993791
+    --user-ids 679593333241 684062674729 425685993791 
 
 aws ec2 describe-snapshots --snapshot-ids $snapshotId --region $REGION && \
 aws ec2 modify-snapshot-attribute \
@@ -17,7 +17,7 @@ aws ec2 modify-snapshot-attribute \
     --region $REGION \
     --attribute createVolumePermission \
     --operation-type add \
-    --user-ids 679593333241 684062674729 425685993791 425685993791
+    --user-ids 679593333241 684062674729 425685993791
 
 aws ec2 describe-snapshot-attribute --region $REGION --attribute createVolumePermission --snapshot-id $snapshotId
 aws ec2 describe-image-attribute --region $REGION --attribute launchPermission --image-id $ImageId
