@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -x -eu -o pipefail
 # CentOS-8-ec2-8.4.2105-20210603.0.aarch64.qcow2
 MAJOR_RELEASE="8"
@@ -42,7 +43,7 @@ taskset -c 0 qemu-img convert \
 
 err "Modified ./${RAW_DISK_NAME}.raw to make it permissive"
 taskset -c 0 virt-edit ./${RAW_DISK_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
-err "virt-customize -a ./${RAW_DISK_NAME}.raw  --update
+err "virt-customize -a ./${RAW_DISK_NAME}.raw  --update"
 taskset -c 1 virt-customize -a ./${RAW_DISK_NAME}.raw --update
 
 # virt-edit ./${RAW_DISK_NAME}.raw  /etc/cloud/cloud.cfg -e "s/name: centos/name: ec2-user/"
