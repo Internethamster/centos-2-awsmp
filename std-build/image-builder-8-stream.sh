@@ -5,12 +5,12 @@ set -euo pipefail
 DRY_RUN=""
 
 MAJOR_RELEASE=8
-NAME="CentOS-Stream-${MAJOR_RELEASE}"
+NAME="CentOS-Stream-ec2-${MAJOR_RELEASE}"
 ARCH=$(arch)
-RELEASE=3.2011
-MINOR_RELEASE="20210210.0"
+UPSTREAM_RELEASE_DATE=20200113
+UPSTREAM_VERSION="0"
 
-VERSION="FIXME"
+VERSION=${1:FIXME}
 DATE=$(date +%Y%m%d)
 
 VERSION="FIXME"
@@ -25,9 +25,10 @@ if [[ -z $REGION ]]
 then
     exit_abnormal
 fi
+URI="https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images"
+FILE="${NAME}-${UPSTREAM_RELEASE_DATE}.${UPSTREAM_VERSION}.${ARCH}.qcow2"
+LINK="${URI}/${FILE}"
 
-FILE="${NAME}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}.${ARCH}.qcow2"
-LINK="https://cloud.centos.org/centos/8-stream/${ARCH}/images/CentOS-Stream-ec2-8-${MINOR_RELEASE}.${ARCH}.qcow2" 
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
 SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)

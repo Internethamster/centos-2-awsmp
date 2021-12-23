@@ -1,10 +1,12 @@
 ---
 plugin: aws_ec2
-# boto_profile: image-builder
+boto_profile: image-builder
 regions:
+  - us-west-2
   - us-east-2
+  - us-east-1
 filters:
-  tag:task: image-builder
+  "tag:task": image-builder
 keyed_groups:
   # Add e.g. x86_64 hosts to an arch_x86_64 group
   - prefix: arch

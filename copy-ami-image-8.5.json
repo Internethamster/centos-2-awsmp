@@ -1,0 +1,9 @@
+{
+    "ClientToken": "9f1fb653-0c64-49a0-a994-1b070774ed6e",
+    "Description": "CentOS-8-ec2-8.5.2111 (arm64) for HVM Instances",
+    "Encrypted": false,
+    "Name": "CentOS-8-ec2-8.5.2111-20211223-1.arm64",
+    "SourceImageId": "ami-0f4f5fc1d370c72a3",
+    "SourceRegion": "us-west-2",
+    "DryRun": false
+}

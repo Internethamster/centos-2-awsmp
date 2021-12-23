@@ -1,0 +1,50 @@
+---
+- name: Deploy a builder for CentOS images
+  hosts: localhost
+  connection: local
+
+  gather_facts: yes
+
+  vars:
+    region: us-west-2
+    profile: image-builder
+    iam_instance_profile: 2P-Lister
+    subnet: subnet-fba35eb1
+    ec2_architecture: x86_64
+    ec2_instance_type:
+      x86_64: m6i.metal
+      arm64: m6g.metal
+    image_id: ami-006073918dcc6f406
+
+
+  tasks:
+    - name: Create a proper security group specific to the build images
+      debug:
+        msg "TODO"
+
+    - name: Create a security group that matches the requirements. 
+    - name: Deploy an instance for building images
+      community.aws.ec2_instance:
+        name: "Builder-x86_64"
+        region: "{{ region }}"
+        profile: "{{ profile }}"
+        iam_instance_profile: "{{ iam_instance_profile }}"
+        vpc_subnet_id: "{{ subnet }}"
+        instance_type: "{{ ec2_instance_type[ec2_architecture] }}" 
+        security_group: default
+        volumes:
+          - device_name: /dev/sda1
+            ebs:
+              volume_size: 20
+              delete_on_termination: true
+          - device_name: /dev/sdf
+            ebs:
+              volume_size: 20
+              delete_on_termination: true
+        network:
+          assign_public_ip: true
+        image_id: "{{ image_id }}"
+        user_data: "{{ lookup('file', 'files/builder-instance-userdata.yml') }}"
+        tags:
+          task: image-builder
+          maintained_by: davdunc

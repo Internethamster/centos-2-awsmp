@@ -1,0 +1,61 @@
+---
+- name: Build the image-builder instance
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    instance_type:
+      x86_64: c5d.metal
+      arm64: c6g.metal
+    aws_region: us-east-1
+    aws_profile: ansible
+    CentOS_owner_id: 125523088429
+    CentOS_Version: 8
+    VPC_Name: EVACS
+  tasks:    
+    - name: Retrieve the VPC by name
+      amazon.aws.ec2_vpc_net_info:
+        region: "{{ aws_region }}"
+        profile: "{{ aws_profile }}"
+        filters:
+          "tag:Name": "{{ VPC_Name }}"
+      register: builder_vpc
+      tags:
+        - always
+
+    - name: "Retrieve the subnets for review from {{ VPC_Name }}"
+      amazon.aws.ec2_vpc_subnet_info:
+        region: "{{ aws_region }}"
+        profile: "{{ aws_profile }}"        
+        filters:
+          vpc-id: "{{ builder_vpc.vpcs[0].id }}"
+      register: builder_vpc_subnets
+      tags:
+        - always
+    
+    - name: Report on the subnets with public ip addresses by default
+      set_fact:
+        builder_subnet: |
+          {{ builder_vpc_subnets.subnets | selectattr('map_public_ip_on_launch',
+          'equalto', true ) | last }}
+
+    - name: Report on the subnets with public ip addresses by default
+      set_fact:
+        builder_instance_type: |
+          "{{ builder_instance_type[builder_instance_arch] }}"
+
+    - name: Find the CentOS images and register the list
+      amazon.aws.ec2_ami_info:
+        region: "{{ aws_region }}"
+        profile: "{{ aws_profile | default(omit) }}"
+        owners: "{{ CentOS_owner_id }}"  # The default should be the centos account
+        filters:
+          name: "CentOS {{ CentOS_Version }}*"
+          architecture: "{{ kiwi_instance_arch }}"
+      register: CentOS_AMIs
+      tags:
+        - centos
+        
+    - name: Create the instance in the VPC
+          

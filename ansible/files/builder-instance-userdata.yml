@@ -1,0 +1,18 @@
+#cloud-config
+users:
+  - name: builder
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCgLnSoeDQ7s9IldWjk7iOjsY/95c1acvq14QPzVjFJkx/yWl1Om1vbGm3D6hLFZj0BEAaneLm9uLHiJVmio04R5RkcBkP7fVXK5wKChM9f/JxHAaXpDqfLdy7d2Op5XRofrqAl7wYT+4RraunC+sUOssutlxoOHNjJyKDswQvE7jxgOFJdjfzmI0GiN30fX19neyl9NbpelYokb2HIp9QWF4nNuLjZQx1rBDx5Dnpbc52FrUxHHLt7e9JKD7KOKCifTpC8U1KABT5FOpbcOiCk2JSwuv2Fkbhmzsb0j0vT9vxSay9rS4+eBnCWtK8TTagTggCYmQE0D8xriegLfx7L davdunc@406c8f4f8cc8.ant.amazon.com
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDb/OPX08QlSfiL+zsaI15qclH9InemRzGmreTXyfxaXruRznH2somzpdmM254G39ZVZ3cco6Xpgi31PJUlYnvLrEBcuWMX8dtduP/Q+KvV6KWgiagV0o9kfRodZ3CigAJa673ESAPbdzbJGAXxq1YNOTpC9o4w/mqVI5Tw0QU4A4LR5lkhkzOF6uXuvThFDmfPfEpCOv2ITIdVoecnD/h6SU8yY4PI7KFG/kDEXGgHdiYnJ3/fE8L9uupoj1s8SqcE372Ii/Hbq7qbSAHq1xRbDemyPyQWPBlZTxpDJBCyVSEF6CZmnqSvxGDk4bxS+gAp0Iy7mVHYaCJtE6ovqAdH davdunc@u0021cccd85f650db1dcd
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    shell: /bin/bash
+    gecos: builder account
+
+package_update: true
+packages:
+  - wget
+  - git
+  - libguestfs-bash-completion-1
+  - libguestfs-tools-c-1
+  - rpmbuild
+final_message: Completed configuration for basic userdata file.
