@@ -15,4 +15,10 @@ packages:
   - libguestfs-bash-completion-1
   - libguestfs-tools-c-1
   - rpmbuild
+  - git-credential-libsecret
+runcmd:
+  - ['git', 'config', '--global', 'credential.helper', 'store']
+  - ['git', 'config', '--global', 'user.name', 'David Duncan']
+  - ['git', 'config', '--global', 'user.email', 'davdunc@amazon.com']
+
 final_message: Completed configuration for basic userdata file.
