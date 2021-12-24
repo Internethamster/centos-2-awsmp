@@ -2,6 +2,8 @@ usage() {
     echo "Usage: $0 [ -v VERSION ] [ -b BUCKET_NAME ] [ -k OBJECT_PREFIX ] [ -a ARCH ] [ -n NAME ] [ -r RELEASE ] [ -R REGION ] [ -d DRY_RUN ]" 1>&2
 }
 
+REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document  | jq -r ".region")
+
 function err() {
     echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
 }
