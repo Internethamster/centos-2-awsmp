@@ -18,6 +18,7 @@ packages:
   - rpmbuild
   - git-credential-libsecret
   - unzip
+  - libguestfs-tools-c
   
 runcmd:
   - ['git', 'config', '--global', 'credential.helper', 'store']
@@ -35,6 +36,5 @@ write_files:
   owner: builder:builder
   path: ${HOME}/.aws/config
   permissions: '0600'
-
 
 final_message: Completed configuration for basic userdata file.
