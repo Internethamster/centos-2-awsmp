@@ -10,6 +10,7 @@ users:
 
 package_update: true
 packages:
+  - jq
   - wget
   - git
   - libguestfs-bash-completion-1
