@@ -20,7 +20,7 @@ S3_PREFIX="disk-images"
 
 source ./shared_functions.sh
 
-
+# Shared functions should set the region env var or we are in the wrong enviornment.
 if [[ -z $REGION ]]
 then
     exit_abnormal
@@ -28,7 +28,7 @@ fi
 IMAGE_NAME="${NAME}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 FILE="${IMAGE_NAME}.qcow2"
 
-LINK="https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2" 
+LINK="https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2"
 
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
@@ -81,7 +81,7 @@ virt-customize -a ./${IMAGE_NAME}.raw  --update
 err "virt-customize -a ./${IMAGE_NAME}.raw  --update"
 
 virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel
-err "virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel" 
+err "virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel"
 
 virt-edit -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1enforcing/"
 err "Modified ./${IMAGE_NAME}.raw to make it enforcing"
@@ -108,7 +108,7 @@ do
     err "import snapshot is still active."
     sleep 60
 done
-err "Import snapshot task is complete" 
+err "Import snapshot task is complete"
 
 snapshotId=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks ${DRY_RUN} --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
 
@@ -140,4 +140,3 @@ aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID \
 # Share AMI with AWS Marketplace
 # err "./share-amis.sh $snapshotId $ImageId"
 # ./share-amis.sh $snapshotId $ImageId
-
