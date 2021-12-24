@@ -2,13 +2,13 @@
 # CENTOS-8 BUILDER
 set -euo pipefail
 
-DRY_RUN=""
+DRY_RUN="--dry-run"
 
 MAJOR_RELEASE=8
 NAME="CentOS-${MAJOR_RELEASE}"
 ARCH="x86_64"
-RELEASE=5.2111
-MINOR_RELEASE="3.2011-20201204.2"
+RELEASE=2111
+MINOR_RELEASE="5.2111"
 
 VERSION="FIXME"
 DATE=$(date +%Y%m%d)
@@ -25,12 +25,15 @@ if [[ -z $REGION ]]
 then
     exit_abnormal
 fi
+IMAGE_NAME="${NAME}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
+FILE="${IMAGE_NAME}.qcow2"
 
-FILE="${NAME}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}.${ARCH}.qcow2"
 LINK="https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2" 
+
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
 SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
+
 SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
 
 if [ ! -e ${NAME}-${DATE}.txt ]; then
@@ -94,20 +97,20 @@ rm ${IMAGE_NAME}.raw
 
 DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
 
-IMPORT_SNAP=$(aws ec2 import-snapshot --region $S3_REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container $DISK_CONTAINER)
+IMPORT_SNAP=$(aws ec2 import-snapshot ${DRY_RUN} --region $S3_REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container $DISK_CONTAINER)
 err "snapshot suceessfully imported to $IMPORT_SNAP"
 
 snapshotTask=$(echo $IMPORT_SNAP | jq -Mr '.ImportTaskId')
 
-while [[ "$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]]
+while [[ "$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks ${DRY_RUN} --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]]
 do
-    aws ec2 --region $S3_REGION describe-import-snapshot-tasks --import-task-ids $snapshotTask
+    aws ec2 --region $S3_REGION describe-import-snapshot-tasks ${DRY_RUN} --import-task-ids $snapshotTask
     err "import snapshot is still active."
     sleep 60
 done
 err "Import snapshot task is complete" 
 
-snapshotId=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
+snapshotId=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks ${DRY_RUN} --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
 
 err "Created snapshot: $snapshotId"
 
@@ -117,7 +120,7 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 
 err $DEVICE_MAPPINGS
 
-ImageId=$(aws ec2 --region $S3_REGION register-image --region $REGION --architecture=x86_64 \
+ImageId=$(aws ec2 --region $S3_REGION register-image ${DRY_RUN} --region $REGION --architecture=x86_64 \
               --description="${NAME}.${MINOR_RELEASE} ($ARCH) for HVM Instances" \
               --virtualization-type hvm  \
               --root-device-name '/dev/sda1' \
@@ -129,10 +132,10 @@ ImageId=$(aws ec2 --region $S3_REGION register-image --region $REGION --architec
 err "Produced Image ID $ImageId"
 echo "SNAPSHOT : ${snapshotId}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MINOR_RELEASE}.txt
 
-err "aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
+err "aws ec2 run-instances ${DRY_RUN} --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
 aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID \
     --image-id $ImageId --instance-type c5n.large --key-name "previous" \
-    --security-group-ids $SECURITY_GROUP_ID $DRY_RUN
+    --security-group-ids $SECURITY_GROUP_ID ${DRY_RUN}
 
 # Share AMI with AWS Marketplace
 # err "./share-amis.sh $snapshotId $ImageId"
