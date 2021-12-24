@@ -17,7 +17,6 @@ VERSION="FIXME"
 S3_BUCKET="aws-marketplace-upload-centos"
 S3_PREFIX="disk-images"
 
-
 source ./shared_functions.sh
 
 # Shared functions should set the region env var or we are in the wrong enviornment.
@@ -25,6 +24,20 @@ if [[ -z $REGION ]]
 then
     exit_abnormal
 fi
+
+if [ ! -e ${NAME}-${DATE}.txt ]; then
+    echo "0" > ${NAME}-${DATE}.txt
+fi
+
+if [ "$VERSION" == "FIXME" ]
+then
+    VERSION=
+    echo $(( $(cat ${NAME}-${DATE}.txt) + 1 )) > ${NAME}-${DATE}.txt
+    VERSION=$(cat ${NAME}-${DATE}.txt)
+fi
+
+
+
 IMAGE_NAME="${NAME}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 FILE="${IMAGE_NAME}.qcow2"
 
@@ -35,16 +48,6 @@ S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
 
 SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
-
-if [ ! -e ${NAME}-${DATE}.txt ]; then
-    echo "0" > ${NAME}-${DATE}.txt
-fi
-
-if [ "$VERSION" == "FIXME" ]
-then
-    echo $(( $(cat ${NAME}-${DATE}.txt) + 1 )) > ${NAME}-${DATE}.txt
-    VERSION=$(cat ${NAME}-${DATE}.txt)
-fi
 
 IMAGE_NAME="${NAME}.${RELEASE}-${DATE}.${VERSION}.${ARCH}"
 
