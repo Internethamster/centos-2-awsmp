@@ -17,9 +17,24 @@ packages:
   - libguestfs-tools-c-1
   - rpmbuild
   - git-credential-libsecret
+  - unzip
+  
 runcmd:
   - ['git', 'config', '--global', 'credential.helper', 'store']
   - ['git', 'config', '--global', 'user.name', 'David Duncan']
   - ['git', 'config', '--global', 'user.email', 'davdunc@amazon.com']
+  - ['mkdir', '-p', '-m', '0700', '${HOME}/.aws']
+  - ['curl', 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip', '-o', 'awscliv2.zip']
+  - ['mkdir', '${HOME}/bin', '${HOME}/lib']
+  - ['unzip', 'awscliv2.zip']
+  - ['aws/install', '-b', '${HOME}/bin', '-i', '${HOME}/lib/aws']
+
+write_files:
+- encoding: b64
+  content: W2RlZmF1bHRdCnJlZ2lvbiA9IHVzLXdlc3QtMgpvdXRwdXQgPSBqc29uCg==
+  owner: builder:builder
+  path: ${HOME}/.aws/config
+  permissions: '0600'
+
 
 final_message: Completed configuration for basic userdata file.
