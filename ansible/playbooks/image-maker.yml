@@ -27,11 +27,16 @@
           - libguestfs-tools-c
       become: true
       
-      - name: run a series of git commands to complete the deployment
-        ansible.builtin.command:
-          argv:
-            - git
-            - config
-            - --global
-            - credential.helper
-            - store
+    - name: run a series of git commands to complete the deployment
+      ansible.builtin.command:
+        argv:
+          - git
+          - config
+          - --global
+          - credential.helper
+          - store
+    - name: clone the centos-2-awsmp repository for use
+      ansible.builtin.git:
+        repo: https://github.com/Internethamster/centos-2-awsmp.git
+        dest: ${HOME}/sandbox/centos-2-awsmp
+        version: development
