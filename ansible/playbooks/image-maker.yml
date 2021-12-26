@@ -1,0 +1,37 @@
+---
+- name: System build configurations for building
+  hosts: tag_task_image_builder
+
+  remote_user: builder
+  gather_facts: yes
+
+  vars:
+    ec2_architecture: x86_64
+
+  tasks:
+    - name: Create Sandbox directory
+      ansible.builtin.file:
+        path: ${HOME}/sandbox
+        state: directory
+
+    - name: Ensure the packages are installed
+      ansible.builtin.dnf:
+        name:
+          - jq
+          - wget
+          - git
+          - libguestfs-bash-completion
+          - rpm-build
+          - git-credential-libsecret
+          - unzip
+          - libguestfs-tools-c
+      become: true
+      
+      - name: run a series of git commands to complete the deployment
+        ansible.builtin.command:
+          argv:
+            - git
+            - config
+            - --global
+            - credential.helper
+            - store
