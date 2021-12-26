@@ -13,12 +13,11 @@ packages:
   - jq
   - wget
   - git
-  - libguestfs-bash-completion-1
-  - libguestfs-tools-c-1
-  - rpmbuild
+  - libguestfs-bash-completion
+  - libguestfs-tools-c
+  - rpm-build
   - git-credential-libsecret
   - unzip
-  - libguestfs-tools-c
   
 runcmd:
   - ['git', 'config', '--global', 'credential.helper', 'store']
