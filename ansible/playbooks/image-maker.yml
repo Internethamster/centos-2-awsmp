@@ -3,7 +3,7 @@
   hosts: tag_task_image_builder
 
   remote_user: builder
-  gather_facts: yes
+  gather_facts: true
 
   vars:
     ec2_architecture: x86_64
@@ -13,6 +13,7 @@
       ansible.builtin.file:
         path: ${HOME}/sandbox
         state: directory
+        mode: 0750
 
     - name: Ensure the packages are installed
       ansible.builtin.dnf:
@@ -26,15 +27,25 @@
           - unzip
           - libguestfs-tools-c
       become: true
-      
-    - name: run a series of git commands to complete the deployment
-      ansible.builtin.command:
-        argv:
-          - git
-          - config
-          - --global
-          - credential.helper
-          - store
+
+    - name: configure the instance to store credentials in the case that they are needed
+      community.general.git_config:
+        name: credenial.helper
+        scope: global
+        value: store
+
+    - name: configure the user email for commit management to the ansible script variable
+      community.general.git_config:
+        name: user.email
+        scope: global
+        value: davdunc@amazon.com
+
+    - name: configure the user email for commit management to the ansible script variable
+      community.general.git_config:
+        name: user.name
+        scope: global
+        value: David Duncan
+
     - name: clone the centos-2-awsmp repository for use
       ansible.builtin.git:
         repo: https://github.com/Internethamster/centos-2-awsmp.git
