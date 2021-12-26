@@ -20,7 +20,6 @@
   tasks:
     - name: Destroy instances for building images
       community.aws.ec2_instance:
-        
         state: terminated
         region: "{{ region }}"
         profile: "{{ profile }}"
