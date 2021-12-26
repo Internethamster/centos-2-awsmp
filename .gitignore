@@ -15,3 +15,5 @@ pyenv/*
 /fedora-us-east-1.json
 test.sh
 test1.sh
+/ansible/playbooks/test.yml
+/ansible/test_function.sh
