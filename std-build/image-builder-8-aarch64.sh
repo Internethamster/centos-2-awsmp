@@ -1,8 +1,8 @@
 #!/bin/bash
 set -x -eu -o pipefail
 MAJOR_RELEASE="8"
-MINOR_RELEASE="4.2105"
-CPE_RELEASE_DATE="20210603"
+MINOR_RELEASE="5.2111"
+CPE_RELEASE_DATE="20210603" #https://cloud.centos.org/centos/8/aarch64/images/CentOS-8-ec2-8.4.2105-20210603.0.
 CPE_RELEASE_REVISION="0"
 RELEASE=${1:-0}
 BUCKET_NAME=aws-marketplace-upload-centos
@@ -24,6 +24,7 @@ fi
 # CentOS-8-ec2-8.4.2105-20210603.0.aarch64.qcow2
 # GenericImage="http://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${NAME}-${CPE_RELEASE_DATE}.${CPE_RELEASE_REVISION}.${ARCH}.qcow2"
 LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${IMAGE}.${ARCH}.qcow2"
+LINK="https://cloud.centos.org/centos/8/aarch64/images/CentOS-8-ec2-8.4.2105-20210603.0.aarch64.qcow2"
 
 
 function err() {
@@ -40,7 +41,7 @@ taskset -c 0 qemu-img convert \
 	 ./${RAW_DISK_NAME}.qcow2 ${RAW_DISK_NAME}.raw
 
 err "Modified ./${RAW_DISK_NAME}.raw to make it permissive"
-taskset -c 0 virt-edit ./${RAW_DISK_NAME}.raw /etc/sysconfig/selinux -e 's/^\(SELINUX=\).*/\1permissive/'
+taskset -c 0 virt-edit ./${RAW_DISK_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "virt-customize -a ./${RAW_DISK_NAME}.raw  --update"
 taskset -c 1 virt-customize -a ./${RAW_DISK_NAME}.raw --update
 
@@ -103,12 +104,10 @@ ImageId=$(aws ec2 register-image --region $REGION --architecture=$ARCHITECTURE \
 
 err "Produced Image ID $ImageId"
 
-err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m6g.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
-
-aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID \
-    --image-id $ImageId --instance-type m6g.large --key-name "davdunc@amazon.com" \
-    --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
-    rm -f ./${RAW_DISK_NAME}.raw rm -f  ./${RAW_DISK_NAME}.qcow2
+err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m6g.large --key-name davdunc@amazon.com --security-group-ids $SECURITY_GROUP_ID"
+aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type m6g.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
+    rm -f ./${RAW_DISK_NAME}.raw
+    rm -f ./${RAW_DISK_NAME}.qcow2
 
 
 # Share AMI with AWS Marketplace
