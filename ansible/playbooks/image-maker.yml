@@ -36,7 +36,7 @@
 
     - name: configure the instance to store credentials in the case that they are needed
       community.general.git_config:
-        name: credenial.helper
+        name: credential.helper
         scope: global
         value: store
 
@@ -57,3 +57,15 @@
         repo: https://github.com/Internethamster/centos-2-awsmp.git
         dest: ${HOME}/sandbox/centos-2-awsmp
         version: development
+
+    - name: Download the awscliv2
+      community.general.get_url:
+        url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip"
+        dest: ${HOME}/sandbox/
+
+
+    - name: "Install the awscliv2 on {{ ansible_architecture }}"
+      ansible.builtin.unarchive:
+        dest: ${HOME}/sandbox/
+        remote_src: false
+        src: "${HOME}/sandbox/awscli-exe-linux-{{ ansible_architecture }}.zip"
