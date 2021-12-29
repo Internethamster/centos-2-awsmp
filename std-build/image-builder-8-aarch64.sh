@@ -1,12 +1,14 @@
 #!/bin/bash
+# CENTOS-8 BUILDER
+set -euo pipefail
 
-set -x -eu -o pipefail
 # CentOS-8-ec2-8.4.2105-20210603.0.aarch64.qcow2
 MAJOR_RELEASE="8"
-MINOR_RELEASE="4.2105"
+MINOR_RELEASE="5.2111"
 CPE_RELEASE_DATE="20210603"
 CPE_RELEASE_REVISION="2"
-RELEASE=$1
+RELEASE=2111
+
 BUCKET_NAME=aws-marketplace-upload-centos
 OBJECT_KEY="disk-images/"
 DATE=$(date +%Y%m%d)
@@ -23,9 +25,12 @@ if [[ "$ARCH" == "aarch64" ]]; then
 else
     ARCHITECTURE="$(arch)"
 fi
-
 GenericImage="http://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${NAME}-${CPE_RELEASE_DATE}.${CPE_RELEASE_REVISION}.${ARCH}.qcow2"
 LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${IMAGE}.${ARCH}.qcow2"
+
+# Shared functions for the applications
+source ./shared_functions.sh
+
 
 
 function err() {
