@@ -1,21 +1,47 @@
 #!/bin/bash
 # CENTOS-8 BUILDER
 set -euo pipefail
-
 DRY_RUN="--dry-run"
+
+S3_BUCKET="aws-marketplace-upload-centos"
+S3_PREFIX="disk-images"
+
+VERSION=${1:-FIXME}
+DATE=$(date +%Y%m%d)
 
 MAJOR_RELEASE=8
 NAME="CentOS-${MAJOR_RELEASE}"
-ARCH="x86_64"
-RELEASE=2111
-MINOR_RELEASE="5.2111"
+RELEASE=2111 # This is the actual CentOS Release
+RED_HAT_MINOR_RELEASE="5"
+MINOR_RELEASE="${RED_HAT_MINOR_RELEASE}.2111"
 
-VERSION="FIXME"
-DATE=$(date +%Y%m%d)
+ARCH=$(arch)
 
-VERSION="FIXME"
-S3_BUCKET="aws-marketplace-upload-centos"
-S3_PREFIX="disk-images"
+if [[ "$ARCH" == "aarch64" ]]; then
+    ARCHITECTURE="arm64"
+    CPE_RELEASE=0
+    CPE_RELEASE_DATE=20210603
+    CPE_RELEASE_REVISION=4.2105
+
+    QEMU_IMG="taskset -c 1 qemu-img"
+    VIRT_CUSTOMIZE="taskset -c 1 virt-customize"
+    VIRT_EDIT="taskset -c 1 virt-edit"
+    VIRT_SYSPREP="taskset -c 1 virt-sysprep"
+
+    INSTANCE_TYPE="m6g.large"
+else
+    ARCHITECTURE="$(arch)"
+    CPE_RELEASE=0
+    CPE_RELEASE_DATE=20210603
+    CPE_RELEASE_REVISION=4.2105
+
+    QEMU_IMG="qemu-img"
+    VIRT_CUSTOMIZE="virt-customize"
+    VIRT_EDIT="virt-edit"
+    VIRT_SYSPREP="virt-sysprep"
+
+    INSTANCE_TYPE="m6i.large"
+fi
 
 source ./shared_functions.sh
 
@@ -36,20 +62,19 @@ then
     VERSION=$(cat ${NAME}-${DATE}.txt)
 fi
 
-
-
 IMAGE_NAME="${NAME}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
+err "IMAGE NAME: ${IMAGE_NAME}"
 FILE="${IMAGE_NAME}.qcow2"
 
-LINK="https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2"
-
+# LINK=https://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${NAME}-GenericCloud-${MAJOR_RELEASE}.${CPE_RELEASE_REVISION}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}.qcow2
+LINK=https://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${NAME}-ec2-${MAJOR_RELEASE}.${CPE_RELEASE_REVISION}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}.qcow2
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
 SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
 
 SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
 
-IMAGE_NAME="${NAME}.${RELEASE}-${DATE}.${VERSION}.${ARCH}"
+IMAGE_NAME="${NAME}-ec2-${RELEASE}-${DATE}.${VERSION}.${ARCH}"
 
 if [[ $(curl -Is ${LINK}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
    then
@@ -74,22 +99,22 @@ fi
 
 err "$LINK retrieved and saved at $(pwd)/${FILE}"
 
-qemu-img convert ./${FILE} ${IMAGE_NAME}.raw && rm -f ${FILE}
+${QEMU_IMG} convert ./${FILE} ${IMAGE_NAME}.raw && rm -f ${FILE}
 err "${IMAGE_NAME}.raw created"
 
-virt-edit -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
+${VIRT_EDIT} -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
 
-virt-customize -a ./${IMAGE_NAME}.raw  --update
-err "virt-customize -a ./${IMAGE_NAME}.raw  --update"
+${VIRT_CUSTOMIZE} -a ./${IMAGE_NAME}.raw  --update
+err "${VIRT_CUSTOMIZE} -a ./${IMAGE_NAME}.raw  --update"
 
-virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel
-err "virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel"
+${VIRT_CUSTOMIZE} -a ./${IMAGE_NAME}.raw --selinux-relabel
+err "${VIRT_CUSTOMIZE} -a ./${IMAGE_NAME}.raw --selinux-relabel"
 
-virt-edit -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1enforcing/"
+${VIRT_EDIT} -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1enforcing/"
 err "Modified ./${IMAGE_NAME}.raw to make it enforcing"
 
-virt-sysprep -a ./${IMAGE_NAME}.raw
+${VIRT_SYSPREP} -a ./${IMAGE_NAME}.raw
 err "upgrading the current packages for the instance: ${IMAGE_NAME}"
 
 err "Cleaned up the volume in preparation for the AWS Marketplace"
@@ -100,8 +125,8 @@ rm ${IMAGE_NAME}.raw
 
 DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
 
-IMPORT_SNAP=$(aws ec2 import-snapshot ${DRY_RUN} --region $S3_REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container $DISK_CONTAINER)
-err "snapshot suceessfully imported to $IMPORT_SNAP"
+IMPORT_SNAP=$(aws ec2 import-snapshot ${DRY_RUN} --region $S3_REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container $DISK_CONTAINER) &&\
+    err "snapshot suceessfully imported to $IMPORT_SNAP"
 
 snapshotTask=$(echo $IMPORT_SNAP | jq -Mr '.ImportTaskId')
 
@@ -123,8 +148,8 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 
 err $DEVICE_MAPPINGS
 
-ImageId=$(aws ec2 --region $S3_REGION register-image ${DRY_RUN} --region $REGION --architecture=x86_64 \
-              --description="${NAME}.${MINOR_RELEASE} ($ARCH) for HVM Instances" \
+ImageId=$(aws ec2 --region $S3_REGION register-image ${DRY_RUN} --region $REGION --architecture=${ARCHITECTURE} \
+              --description="${NAME}.${MINOR_RELEASE} (${ARCHITECTURE}) for HVM Instances" \
               --virtualization-type hvm  \
               --root-device-name '/dev/sda1' \
               --name=${IMAGE_NAME} \
@@ -137,7 +162,7 @@ echo "SNAPSHOT : ${snapshotId}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> $
 
 err "aws ec2 run-instances ${DRY_RUN} --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
 aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID \
-    --image-id $ImageId --instance-type c5n.large --key-name "previous" \
+    --image-id $ImageId --instance-type ${INSTANCE_TYPE} --key-name "previous" \
     --security-group-ids $SECURITY_GROUP_ID ${DRY_RUN}
 
 # Share AMI with AWS Marketplace
