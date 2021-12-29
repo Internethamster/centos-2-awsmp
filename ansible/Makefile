@@ -1,10 +1,11 @@
-# This is a mkefile for the ansible project I use for infrastructure.
+# This is a makefile for the ansible project I use for infrastructure.
 #
 # make deploy - build or verify both systems are available
 STAGE ?= development
 ANSIBLE_PLAYBOOK ?= ansible-playbook
 ANSIBLE_INVENTORY ?= ansible-inventory
 INVENTORY ?= inventory/builder.aws_ec2.yaml
+
 
 .PHONY: inventory deploy clean
 
@@ -18,13 +19,18 @@ deployx86:
 deployarm:
 	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=arm64" ./deployment-std.yml -vvv
 
+
 deploy: deployx86 deployarm inventory
 	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "stage=$(STAGE)" ./playbooks/image-maker.yml -vvv
+
+
 cleanx86:
 	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=x86_64" ./clean-std.yml -vvv
 
+
 cleanarm:
 	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=arm64" ./clean-std.yml -vvv
+
 
 clean: cleanx86 cleanarm
 	rm -f inventory.json
