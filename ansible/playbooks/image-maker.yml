@@ -19,6 +19,7 @@
       ansible.builtin.dnf:
         name: "*"
         state: latest
+      become: true
 
     - name: Ensure the packages are installed
       ansible.builtin.dnf:
