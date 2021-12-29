@@ -15,6 +15,11 @@
         state: directory
         mode: 0750
 
+    - name: update the instance to the latest release
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+
     - name: Ensure the packages are installed
       ansible.builtin.dnf:
         name:
@@ -40,7 +45,7 @@
         scope: global
         value: davdunc@amazon.com
 
-    - name: configure the user email for commit management to the ansible script variable
+    - name: configure the user name for commit management to the ansible script variable
       community.general.git_config:
         name: user.name
         scope: global
