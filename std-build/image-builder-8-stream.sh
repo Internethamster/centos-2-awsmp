@@ -69,7 +69,7 @@ SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
 
 SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
 
-IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-ec2-${DATE}.${VERSION}.${ARCH}"
+IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-ec2-${CPE_RELEASE_DATE}.${CPE_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 
 if [[ $(curl -Is ${LINK}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
    then
