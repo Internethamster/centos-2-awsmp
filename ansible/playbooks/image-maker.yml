@@ -15,12 +15,6 @@
         state: directory
         mode: 0750
 
-    - name: update the instance to the latest release
-      ansible.builtin.dnf:
-        name: "*"
-        state: latest
-      become: true
-
     - name: Ensure the packages are installed
       ansible.builtin.dnf:
         name:
@@ -59,13 +53,19 @@
         version: development
 
     - name: Download the awscliv2
-      community.general.get_url:
+      get_url:
         url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip"
         dest: ${HOME}/sandbox/
+      register: awscliv2
 
-
-    - name: "Install the awscliv2 on {{ ansible_architecture }}"
+    - name: "Unzip the awscliv2 on {{ ansible_architecture }}"
       ansible.builtin.unarchive:
         dest: ${HOME}/sandbox/
-        remote_src: false
+        remote_src: yes
         src: "${HOME}/sandbox/awscli-exe-linux-{{ ansible_architecture }}.zip"
+
+    - name: "Install the AWSCLIv2"
+      command: ./aws/install -i ${HOME}/lib/ -b ${HOME}/bin
+      args:
+        chdir: ${HOME}/sandbox
+        creates: ${HOME}/bin/aws
