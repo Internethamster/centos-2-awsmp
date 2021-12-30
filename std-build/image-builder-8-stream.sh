@@ -53,8 +53,8 @@ fi
 if [ "$VERSION" == "FIXME" ]
 then
     VERSION=
-    echo $(( $(cat ${NAME}-${DATE}.txt) + 1 )) > ${NAME}-${DATE}.txt
-    VERSION=$(cat ${NAME}-${DATE}.txt)
+    echo $(( $(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt) + 1 )) > ${NAME}-${MAJOR_RELEASE}-${DATE}.txt
+    VERSION=$(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt)
 fi
 
 IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-ec2-${DATE}.${VERSION}.${ARCH}"
