@@ -1,0 +1,8 @@
+{
+    "Description": "CentOS-8.5.2111 (arm64) for HVM Instances",
+    "Encrypted": false,
+    "Name": "CentOS-8-ec2-8.5.2111-20211223-1.arm64",
+    "SourceImageId": "ami-09eff69698f4658e8",
+    "SourceRegion": "us-west-2",
+    "DryRun": false
+}
