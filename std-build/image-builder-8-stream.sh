@@ -38,7 +38,7 @@ else
     INSTANCE_TYPE="m6i.large"
 fi
 
-source ./shared_functions.sh
+source ${0%/*}/shared_functions.sh
 
 # Shared functions should set the region env var or we are in the wrong enviornment.
 if [[ -z $REGION ]]
