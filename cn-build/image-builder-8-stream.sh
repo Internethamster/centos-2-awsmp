@@ -21,7 +21,6 @@ DATE=$(date +%Y%m%d)
 REGION=cn-northwest-1
 SUBNET_ID=subnet-0890b142
 SECURITY_GROUP_ID=sg-5993f530
-DRY_RUN="--dry-run"
 
 UPSTREAM_FILE_NAME="${NAME}-${MINOR_RELEASE}.${ARCH}"
 BASE_URI="https://cloud.centos.org/centos"
