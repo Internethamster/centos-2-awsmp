@@ -17,3 +17,4 @@ test.sh
 test1.sh
 /ansible/playbooks/test.yml
 /ansible/test_function.sh
+/src/config-details.py
