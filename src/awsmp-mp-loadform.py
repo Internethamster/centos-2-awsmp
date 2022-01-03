@@ -1,12 +1,12 @@
 from openpyxl import load_workbook
-import sqlalchemy
+from config-details import default_config
 import configparser
 import argparse
-from pathlib import Path
+from pathlib import PurePath, Path
 import os
 
-
-from pathlib import PurePath, Path
+# - SQLALCHEMY -
+Base = declarative_base()
 
 def buildconfigfilepath(filepath, extension='ini'):
     '''Build a configuration file path for the default location for the .ini file'''
@@ -32,13 +32,30 @@ class metadata_sheet(Object):
         Workbook_Name = self.Workbook_name
 
     @property
-    def worksheet(self):
+    def worksheet_path(self):
+        return self.__name
 
-class product(Object):
-    ```This is a single product. Each product has defaults. A modified product is a version.```
-    def __init__(self, product_id):
-        self.product_id = product_id
-
+    @worksheet_path.setter
+    def worksheet_path(self, value=None):
+        '''
+        Set the path to the excel worksheet and return that value.
+        Parameters:
+          value tuple ( <parent>, <name> )
+            parent directory path, can be relative or absolute
+            name is the name of the worksheet
+        Returns:
+          worksheet_path
+        '''
+        try:
+            # if the path name from the config is not valid, try to
+            # use a local version.
+            Path(value[0]).is_dir
+        except:
+            value = (os.getcwd(), value[1])
+        path = os.path.join(value[0], value[1])
+        if Path(path).is_file:
+            return path
+        return None
 
 
 if __name__ == "__main__":
@@ -51,7 +68,9 @@ if __name__ == "__main__":
     parser.add_argument( "-c", "--config", type=str,
                          help="The config file for custom configuration", default=default_ini_file )
     args = parser.parse_args()
-
+    config = configparser.ConfigParser()
     try:
-        config = configparser.ConfigParser()
         config.read(args.config)
+    except:
+        # Set Config defaults
+        config.read_dict(default_config)
