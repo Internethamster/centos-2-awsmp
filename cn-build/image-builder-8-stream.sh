@@ -1,6 +1,10 @@
 #!/bin/bash
 # CENTOS-8-STREAM BUILDER for CN
 set -euo pipefail
+DRY_RUN="--dry-run"
+
+S3_BUCKET="davdunc-floppy"
+S3_PREFIX="disk-images"
 
 MAJOR_RELEASE=8
 UPSTREAM_RELEASE="${MAJOR_RELEASE}-stream"
@@ -90,10 +94,10 @@ err "upgrading the current packages for the instance: ${IMAGE_NAME}"
 
 err "Cleaned up the volume in preparation for the AWS Marketplace"
 
-aws s3 cp ./${IMAGE_NAME}.raw  s3://davdunc-floppy/disk-images/
-err "Upload ${IMAGE_NAME}.raw image to S3://davdunc-floppy/disk-images/"
+aws s3 cp ./${IMAGE_NAME}.raw  s3://${S3_BUCKET}/${S3_PREFIX}/
+err "Upload ${IMAGE_NAME}.raw image to S3://${S3_BUCKET}/${S3_PREFIX}/"
 
-DISK_CONTAINER="Description=\'${IMAGE_NAME}\',Format=raw,UserBucket={S3Bucket=davdunc-floppy,S3Key=disk-images/${IMAGE_NAME}.raw}"
+DISK_CONTAINER="Description=\'${IMAGE_NAME}\',Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
 err DISK_CONTAINER="$DISK_CONTAINER"
 IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container "$DISK_CONTAINER")
 err "snapshot suceessfully imported to $IMPORT_SNAP"
