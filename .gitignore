@@ -16,4 +16,8 @@ test.sh
 test1.sh
 /ansible/playbooks/test.yml
 /ansible/test_function.sh
+# This includes some details that aren't private, but aren't necessary to have in the world yet
 /src/config-details.py
+# Ignore my test ipython notebook
+/centos-2-awsmp/openpyxl-loadform-tester.ipynb 
+/centos-2-awsmp/product-export-*.xlsx
