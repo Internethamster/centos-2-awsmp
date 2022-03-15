@@ -5,15 +5,13 @@ set -euo pipefail
 DRY_RUN=""
 
 MAJOR_RELEASE=8
-NAME="CentOS-Stream-${MAJOR_RELEASE}"
+NAME="CentOS-Stream-ec2-${MAJOR_RELEASE}"
 ARCH=$(arch)
-RELEASE=3.2011
-MINOR_RELEASE="20210210.0"
+CENTOS_RELEASE="20220125.1"
 
 VERSION="FIXME"
 DATE=$(date +%Y%m%d)
 
-VERSION="FIXME"
 S3_BUCKET="aws-marketplace-upload-centos"
 S3_PREFIX="disk-images"
 
@@ -26,8 +24,8 @@ then
     exit_abnormal
 fi
 
-FILE="${NAME}-ec2-${MAJOR_RELEASE}.${MINOR_RELEASE}.${ARCH}.qcow2"
-LINK="https://cloud.centos.org/centos/8-stream/${ARCH}/images/CentOS-Stream-ec2-8-${MINOR_RELEASE}.${ARCH}.qcow2" 
+FILE="${NAME}-${MAJOR_RELEASE}-${CENTOS_RELEASE}.${ARCH}"
+LINK="http://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${FILE}.qcow2"
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
 SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
@@ -118,7 +116,7 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 err $DEVICE_MAPPINGS
 
 ImageId=$(aws ec2 --region $S3_REGION register-image --region $REGION --architecture=x86_64 \
-              --description="${NAME}.${MINOR_RELEASE} ($ARCH) for HVM Instances" \
+              --description="${NAME}.${CENTOS_RELEASE} ($ARCH) for HVM Instances" \
               --virtualization-type hvm  \
               --root-device-name '/dev/sda1' \
               --name=${IMAGE_NAME} \
@@ -127,7 +125,7 @@ ImageId=$(aws ec2 --region $S3_REGION register-image --region $REGION --architec
               --output text)
 
 err "Produced Image ID $ImageId"
-echo "SNAPSHOT : ${snapshotId}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MINOR_RELEASE}.txt
+echo "SNAPSHOT : ${snapshotId}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${CENTOS_RELEASE}.txt
 
 err "aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
 aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID \
