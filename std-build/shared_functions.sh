@@ -22,6 +22,7 @@ function get_s3_bucket_location () {
     then
 	STORAGE_REGION="us-east-1"
     fi
+    echo $STORAGE_REGION
 }
 
 while getopts ":v:b:k:a:n:r:R:dp" options; do
