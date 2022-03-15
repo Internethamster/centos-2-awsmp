@@ -15,3 +15,5 @@ pyenv/*
 /fedora-us-east-1.json
 test.sh
 test1.sh
+/std-build/*.raw
+*/CentOS-Stream-ec2-*

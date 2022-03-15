@@ -76,13 +76,18 @@ get_default_sg_for_vpc () {
     aws ec2 describe-security-groups --region $REGION --filters "Name=vpc-id,Values=${VPC_ID}" --query 'SecurityGroups[?GroupName == `default`].GroupId' --output text
 }
 
-function copy_snapshot_to_us-east-1 {
+function copySnapshotToRegion {
 
-if [[ "$REGION" != "us-east-1" ]]
-then
+    if [[ "$REGION" != "us-east-1" ]]
+    then
 
-    aws ec2 copy-snapshot --source-region $REGION --source-snapshot-id $snapshotId \
-	--destination-region us-east-1 \
-	--description "Import Base CentOS${MAJOR_RELEASE} ${ARCHITECTURE} Image"
-fi
+	local IAD_snap=$(aws ec2 copy-snapshot --source-region $REGION --source-snapshot-id $snapshotId \
+			     --destination-region us-east-1 \
+			     --description "Import Base CentOS${MAJOR_RELEASE} ${ARCHITECTURE} Image" \
+			     --query 'SnapshotId' --output text
+	      )
+    else
+	local IAD_snap=$snapshotId
+    fi
+    echo $IAD_snap
 }
