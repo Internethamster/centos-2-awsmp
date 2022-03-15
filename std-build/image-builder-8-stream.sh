@@ -9,22 +9,21 @@ NAME="CentOS-Stream-ec2-${MAJOR_RELEASE}"
 ARCH=$(arch)
 CENTOS_RELEASE="20220125.1"
 
+REGION=us-east-1
 VERSION="FIXME"
 DATE=$(date +%Y%m%d)
 
 S3_BUCKET="aws-marketplace-upload-centos"
 S3_PREFIX="disk-images"
 
-
 source ./shared_functions.sh
-
 
 if [[ -z $REGION ]]
 then
     exit_abnormal
 fi
 
-FILE="${NAME}-${MAJOR_RELEASE}-${CENTOS_RELEASE}.${ARCH}"
+FILE="${NAME}-${CENTOS_RELEASE}.${ARCH}"
 LINK="http://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${FILE}.qcow2"
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
@@ -41,7 +40,7 @@ then
     VERSION=$(cat ${NAME}-${DATE}.txt)
 fi
 
-IMAGE_NAME="${NAME}.${RELEASE}-${DATE}.${VERSION}.${ARCH}"
+IMAGE_NAME="${NAME}-${DATE}.${VERSION}.${ARCH}"
 
 if [[ $(curl -Is ${LINK}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
    then
