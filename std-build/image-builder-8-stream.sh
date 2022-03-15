@@ -7,6 +7,13 @@ DRY_RUN=""
 MAJOR_RELEASE=8
 NAME="CentOS-Stream-ec2-${MAJOR_RELEASE}"
 ARCH=$(arch)
+if [[ "$ARCH" == "aarch64" ]]
+then
+    ARCHITECTURE=arm64
+else
+    ARCHITECTURE=$ARCH
+fi
+
 CENTOS_RELEASE="20220125.1"
 
 REGION=us-east-1
@@ -114,7 +121,7 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 
 err $DEVICE_MAPPINGS
 
-ImageId=$(aws ec2 --region $S3_REGION register-image --region $REGION --architecture=x86_64 \
+ImageId=$(aws ec2 --region $S3_REGION register-image --region $REGION --architecture=$ARCHITECTURE \
               --description="${NAME}.${CENTOS_RELEASE} ($ARCH) for HVM Instances" \
               --virtualization-type hvm  \
               --root-device-name '/dev/sda1' \
