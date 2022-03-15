@@ -63,14 +63,14 @@ while getopts ":v:b:k:a:n:r:R:dp" options; do
 done
 
 get_default_vpc_subnet () {
-    local REGION=$1
+    local REGION=${1:-$REGION}
     local VPC_ID=$(aws ec2 describe-vpcs --region $REGION --query "Vpcs[?IsDefault].VpcId" --output text)
-    aws ec2 describe-subnets --region $REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[?MapPublicIpOnLaunch] | [0].SubnetId" --output text
+    aws ec2 describe-subnets --region $REGION --filters "Name=vpc-id,Values=${VPC_ID}" --query "Subnets[?MapPublicIpOnLaunch] | [0].SubnetId" --output text
 
 }
 
 get_default_sg_for_vpc () {
-    local REGION=$1
+    local REGION=${1:-$REGION}
     local VPC_ID=$(aws ec2 describe-vpcs --region $REGION --query "Vpcs[?IsDefault].VpcId" --output text)
     aws ec2 describe-security-groups --region $REGION --filters "Name=vpc-id,Values=${VPC_ID}" --query 'SecurityGroups[?GroupName == `default`].GroupId' --output text
 }
