@@ -40,39 +40,55 @@ get_default_sg_for_vpc () {
 
 while getopts ":v:b:k:a:n:r:R:dp" options; do
     case "${options}" in
-        v)
-            VERSION=${OPTARG}
-            ;;
-        b)
-            S3_BUCKET=${OPTARG}
-            ;;
-        k)
-            S3_PREFIX=${OPTARG}
-            ;;
-        r)
-            RELEASE=${OPTARG}
-            ;;
-        R)
-            REGION=${OPTARG}
-            ;;
-        a)
-            ARCH=${OPTARG}
-            ;;
-        n)
-            NAME=${OPTARG}
-            ;;
-        d)
-            DRY_RUN="--dry-run"
-            ;;
-        p)
-            PSTATE="true"
-            ;;
-        :)
-            "Error: -${OPTARG} requires an argument"
-            ;;
-        *)
-            exit_abnormal
-            ;;
+	v)
+	    VERSION=${OPTARG}
+	    ;;
+	b)
+	    S3_BUCKET=${OPTARG}
+	    ;;
+	k)
+	    S3_PREFIX=${OPTARG}
+	    ;;
+	r)
+	    RELEASE=${OPTARG}
+	    ;;
+	R)
+	    REGION=${OPTARG}
+	    ;;
+	a)
+	    ARCH=${OPTARG}
+	    ;;
+	n)
+	    NAME=${OPTARG}
+	    ;;
+	d)
+	    DRY_RUN="--dry-run"
+	    ;;
+	p)
+	    PSTATE="true"
+	    ;;
+	:)
+	    "Error: -${OPTARG} requires an argument"
+	    ;;
+	*)
+	    exit_abnormal
+	    ;;
     esac
 done
 
+function copySnapshotToRegion {
+
+    local IAD_snap=$snapshotId
+
+    if [[ "$REGION" != "us-east-1" ]]
+    then
+
+	local IAD_snap=$(aws ec2 copy-snapshot --source-region $REGION --source-snapshot-id $snapshotId \
+			     --destination-region us-east-1 \
+			     --description "Import Base CentOS${MAJOR_RELEASE} ${ARCHITECTURE} Image" \
+			     --query 'SnapshotId' --output text
+	      )
+    fi
+
+    echo $IAD_snap
+}
