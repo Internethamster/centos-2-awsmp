@@ -17,10 +17,10 @@ function get_s3_bucket_location () {
     local BUCKET_NAME=$1
 
     local STORAGE_REGION=$(aws s3api get-bucket-location --bucket $BUCKET_NAME \
-                --query 'LocationConstraint' --output text)
+		--query 'LocationConstraint' --output text)
     if [[ "$STORAGE_REGION" == "null" ]]
     then
-        STORAGE_REGION="us-east-1"
+	STORAGE_REGION="us-east-1"
     fi
     printf "%s" $STORAGE_REGION
 }
