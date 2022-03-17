@@ -6,6 +6,7 @@
 
   vars:
     centos_version:
+      Stream9: "CentOS Stream 9 {{ arch }}"
       Stream8: "CentOS Stream 8 {{ arch }}"
       CentOS8: "CentOS 8.3.2011 {{ arch }}"
       CentOS7: "CentOS 7.9.2009 {{ arch }}"
@@ -18,7 +19,7 @@
       owner_id: "125523088429"
     arch: x86_64
 #     boto_profile: ansible
-    aws_instance_role: jenkins-ec2-role
+    aws_instance_role: jenkins-ec2-role 
     aws_instance_type: m5.large
     aws_region: us-east-2
   tasks:
@@ -31,6 +32,15 @@
       architecture: x86_64
     when: arch == "x86_64"
 
+  - name: "Get the Details for {{ centos_version.Stream9 }}"
+    ec2_ami_info:
+      owners: "{{ ami.owner_id }}"
+      region: "{{ aws_region }}"
+      filters:
+        name: "CentOS Stream 9 {{ architecture }}"
+        architecture: "{{ arch }}"
+      profile: "{{ boto_profile | default(omit) }}"
+    register: stream_8_images
   - name: "Get the Details for {{ centos_version.Stream8 }}"
     ec2_ami_info:
       owners: "{{ ami.owner_id }}"
