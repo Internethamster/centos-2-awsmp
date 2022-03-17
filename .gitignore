@@ -3,12 +3,9 @@
 \#*\#
 .*\#*
 ansible/roles/geerlingguy*
-jenkins/pipelines-jobs/jenkins_jobs.ini
+jenkins/pipelines-jobs/
 .gitignore
 pyenv
-pyenv/*
-=======
->>>>>>> Stashed changes
 /ansible/ansible_collections/
 /fedora-list.tsv
 /fedora-us-east-1.json
@@ -21,3 +18,5 @@ test1.sh
 # Ignore my test ipython notebook
 /centos-2-awsmp/openpyxl-loadform-tester.ipynb 
 /centos-2-awsmp/product-export-*.xlsx
+/ansible/ansible_collections/
+/pyenv/
