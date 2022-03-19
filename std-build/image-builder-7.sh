@@ -63,7 +63,7 @@ if [[ "$FILE_STATE" == "COMPRESSED" ]]
 fi
 
 qemu-img convert ./${FILE} ${IMAGE_NAME}.raw && rm ${FILE}
-err "${IMAGE_NAME}.raw created" 
+err "${IMAGE_NAME}.raw created"
 
 virt-edit ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
