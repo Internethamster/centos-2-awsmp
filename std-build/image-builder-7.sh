@@ -5,7 +5,7 @@ set -x -euo pipefail
 DRY_RUN=""
 NAME="CentOS-7"
 ARCH="x86_64"
-RELEASE="2009"
+RELEASE="2111"
 
 S3_PREFIX="disk-images"
 S3_BUCKET="aws-marketplace-upload-centos"
