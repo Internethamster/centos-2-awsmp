@@ -72,7 +72,7 @@ virt-customize -a ./${IMAGE_NAME}.raw --update
 err "virt-customize -a ./${IMAGE_NAME}.raw --update"
 
 virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel
-err "virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel" 
+err "virt-customize -a ./${IMAGE_NAME}.raw --selinux-relabel"
 
 virt-edit -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1enforcing/"
 err "Modified ./${IMAGE_NAME}.raw to make it enforcing"
