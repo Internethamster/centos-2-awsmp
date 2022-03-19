@@ -93,17 +93,17 @@ err "snapshot suceessfully imported to $IMPORT_SNAP"
 
 snapshotTask=$(echo $IMPORT_SNAP | jq -Mr '.ImportTaskId')
 
-while [[ "$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]] 
+while [[ "$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]]
 do
     aws ec2 --region $S3_REGION describe-import-snapshot-tasks --import-task-ids $snapshotTask
     err "import snapshot is still active."
     sleep 60
 done
-err "Import snapshot task is complete" 
+err "Import snapshot task is complete"
 
 snapshotId=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
 
-err "Created snapshot: $snapshotId" 
+err "Created snapshot: $snapshotId"
 
 sleep 20
 
@@ -124,9 +124,8 @@ err "Produced Image ID $ImageId"
 echo "SNAPSHOT : ${snapshotId}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${RELEASE}.txt
 err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5.large --key-name previous --security-group-ids $SECURITY_GROUP_ID"
 
-aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5.large --key-name "previous" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN 
+aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5.large --key-name "previous" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN
 
 # Share AMI with AWS Marketplace
 # err "./share-amis.sh $snapshotId $ImageId"
 # ./share-amis.sh $snapshotId $ImageId
-
