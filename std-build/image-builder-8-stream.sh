@@ -27,8 +27,8 @@ if [[ "$ARCH" == "aarch64" ]]; then
     INSTANCE_TYPE="m6g.large"
 else
     ARCHITECTURE="$(arch)"
-    CPE_RELEASE=0
-    CPE_RELEASE_DATE=20210603
+    CPE_RELEASE=1
+    CPE_RELEASE_DATE=20220125
 
     QEMU_IMG="qemu-img"
     VIRT_CUSTOMIZE="virt-customize"
@@ -163,3 +163,4 @@ aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID \
 # Share AMI with AWS Marketplace
 # err "./share-amis.sh $snapshotId $ImageId"
 # ./share-amis.sh $snapshotId $ImageId
+o
