@@ -6,18 +6,18 @@ DRY_RUN="--dry-run"
 S3_BUCKET="aws-marketplace-upload-centos"
 S3_PREFIX="disk-images"
 
-VERSION=${1:-FIXME}
+VERSION="FIXME"
 DATE=$(date +%Y%m%d)
 
 MAJOR_RELEASE=8
-NAME="CentOS-Stream"
+NAME="CentOS-Stream-ec2"
 
 ARCH=$(arch)
 
 if [[ "$ARCH" == "aarch64" ]]; then
     ARCHITECTURE="arm64"
-    CPE_RELEASE=0
-    CPE_RELEASE_DATE=20210603
+    CPE_RELEASE=1
+    CPE_RELEASE_DATE=20220125
 
     QEMU_IMG="taskset -c 1 qemu-img"
     VIRT_CUSTOMIZE="taskset -c 1 virt-customize"
