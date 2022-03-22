@@ -38,7 +38,7 @@ get_default_sg_for_vpc () {
     aws ec2 describe-security-groups --region $REGION --filters "Name=vpc-id,Values=${VPC_ID}" --query 'SecurityGroups[?GroupName == `default`].GroupId' --output text
 }
 
-while getopts ":v:b:k:a:n:r:R:dp" options; do
+while getopts ":f:v:b:k:a:n:r:R:dp" options; do
     case "${options}" in
 	v)
 	    VERSION=${OPTARG}
@@ -66,6 +66,9 @@ while getopts ":v:b:k:a:n:r:R:dp" options; do
 	    ;;
 	p)
 	    PSTATE="true"
+	    ;;
+	f)
+	    FILE_FORMAT=${OPTARG}
 	    ;;
 	:)
 	    "Error: -${OPTARG} requires an argument"
