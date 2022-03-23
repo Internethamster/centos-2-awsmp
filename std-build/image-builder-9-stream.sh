@@ -5,7 +5,7 @@
 # It's annoying, but now the names have to go in the arch-specific config
 set -euo pipefail
 DRY_RUN=""
-
+AWS_PAGER=""
 S3_BUCKET="aws-marketplace-upload-centos"
 S3_PREFIX="disk-images"
 
