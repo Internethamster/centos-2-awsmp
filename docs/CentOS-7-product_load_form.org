@@ -9,7 +9,7 @@
 ** Title
    CentOS 7 (x86_64) - with Updates HVM
 ** Short Description
-   <blank>
+   Official CentOS 7 x86_64 HVM image with updated packages through 2022-03-19
 ** Full Description
    This is an Official CentOS 7 x86_64 HVM image built with a minimal
    profile, suitable for use in HVM instance types only. The image
@@ -19,14 +19,14 @@
    CentOS-7 image that AWS recommends everyone use. It contains updated
    packages and the images are updated at points in time to include
    critical security updates.
-   
+
 * Highlights
 ** Highlight 1
    CentOS Linux images are built with SELINUX set to
    enforcing mode. The CentOS team tests the images with both Selinux
    enabled as well as permissive.
 ** Highlight 2
-   With the release of CentOS-7.2009 cloud-init now includes support for
+   With the release of CentOS-7.2111 cloud-init now includes support for
    IMDSv2 in all CentOS AMI's. The default user is configured as
    'centos'. Once the instance is running, you will
    be able to login and use sudo for privileged commands.
@@ -35,11 +35,18 @@
    http://wiki.centos.org/Cloud/AWS for details on how these images
    are built, how you might be able to extend and add functionality to
    these images as well as Getting Started guides.
+* Product Categories
+  | Category | Category Name              |
+  |----------+----------------------------|
+  |        1 | Operating System           |
+  |        2 | High Performance Computing |
+  |        3 | None                       |
+
 * Supported Instance Types
 ** For Intel/AMD Architectures
    All instance types Supported.
 
+
    | Instance Family | Supports CentOS 7 | Min. Kernel Version | Min. Minor Release |
    |-----------------+-------------------+---------------------+--------------------|
    |                 |                   |                     |                    |
-
