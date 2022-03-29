@@ -17,15 +17,16 @@ DATE=$(date +%Y%m%d)
 source ./shared_functions.sh
 
 
-if [[ -z $REGION ]]
-then
-    exit_abnormal
-fi
-
 FILE="${NAME}-${ARCH}-GenericCloud-${RELEASE}.qcow2"
 LINK="http://cloud.centos.org/centos/7/images/${FILE}"
 
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
+
+if [[ -z $REGION ]]
+then
+    REGION=$S3_REGION
+fi
+
 
 SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
 SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
