@@ -57,7 +57,7 @@ then
     VERSION=$(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt)
 fi
 
-IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-ec2-${DATE}.${VERSION}.${ARCH}"
+IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 err "IMAGE NAME: ${IMAGE_NAME}"
 FILE="${IMAGE_NAME}.qcow2"
 
@@ -163,4 +163,4 @@ aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID \
 # Share AMI with AWS Marketplace
 # err "./share-amis.sh $snapshotId $ImageId"
 # ./share-amis.sh $snapshotId $ImageId
-o
+
