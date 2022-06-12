@@ -20,3 +20,4 @@ test1.sh
 /centos-2-awsmp/product-export-*.xlsx
 /ansible/ansible_collections/
 /pyenv/
+/node_modules/
