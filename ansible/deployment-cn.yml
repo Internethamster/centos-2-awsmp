@@ -34,22 +34,22 @@
             to_port: 22
             cidr_ip: 52.82.200.0/25
 
-        
-    - name: Find the CentOS Stream 9 Image in the Fedora account
-      amazon.aws.ec2_ami_info:
-        region: "{{ region }}"
-        profile: "{{ profile }}"
-        owners: 479567141204
-        filters:
-          architecture: "{{ ec2_architecture }}"
-          name: "CentOS Stream 8*"
-      register: centos_amis
+      # This doesn't work yet
+    # - name: Find the CentOS Stream 9 Image in the Fedora account
+    #   amazon.aws.ec2_ami_info:
+    #     region: "{{ region }}"
+    #     profile: "{{ profile }}"
+    #     owners: 479567141204
+    #     filters:
+    #       architecture: "{{ ec2_architecture }}"
+    #       name: "CentOS Stream 8*"
+    #   register: centos_amis
+    # 
+    # - name: Get the most recently published image
+    #   set_fact:
+    #     centos_ami: "{{ centos_amis.images | sort(attribute='creation_date') | last  }}"
 
-    - name: Get the most recently published image
-      set_fact:
-        centos_ami: "{{ centos_amis.images | sort(attribute='creation_date') | last  }}"
-
-    - name: Deploy an instance for building images
+    - name: "Deploy an instance for building {{ ec2_architecture }} images."
       community.aws.ec2_instance:
         name: "Builder-{{ ec2_architecture }}"
         region: "{{ region }}"
@@ -57,9 +57,7 @@
         instance_role: "{{ aws_instance_role }}"
         vpc_subnet_id: "{{ subnet }}"
         instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
-        security_group:
-          - default
-          - centos-2-awsmp-sg
+        security_group: default
         volumes:
           - device_name: /dev/sda1
             ebs:
@@ -67,8 +65,8 @@
               delete_on_termination: true
         network:
           assign_public_ip: true
-        image_id: "{{ centos_ami.image_id }}"
-        user_data: "{{ lookup('file', 'files/builder-instance-userdata.yml') }}"
+        image_id: "{{ image_id[ec2_architecture] }}"
+        user_data: "{{ lookup('file', 'files/builder-cn-instance-userdata.yml') }}"
         tags:
           task: image-builder
           maintained_by: davdunc
