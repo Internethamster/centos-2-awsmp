@@ -16,8 +16,8 @@
       x86_64: c5d.metal
       arm64: c6g.metal
     image_id:
-      - x86_64: ami-0167519b634ad8b03
-      - arm64: ami-03f679efb23042ce6
+      x86_64: ami-0167519b634ad8b03
+      arm64: ami-03f679efb23042ce6
 
 
   tasks:
