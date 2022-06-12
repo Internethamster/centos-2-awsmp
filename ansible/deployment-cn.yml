@@ -8,7 +8,7 @@
   vars:
     region: cn-northwest-1
     profile: bjs
-    aws_instance_role: image-builder-tools-instance
+    aws_instance_role: Tools-Instance
     subnet: subnet-5a68b633
     vpc_id: vpc-f9f02290
     ec2_architecture: arm64
