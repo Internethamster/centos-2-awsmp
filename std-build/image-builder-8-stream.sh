@@ -1,16 +1,19 @@
 #!/bin/bash
 # CENTOS-Stream-8 BUILDER
+
+# Set up a file that includes the content 
 set -euo pipefail
+
 DRY_RUN="--dry-run"
 
 S3_BUCKET="aws-marketplace-upload-centos"
 S3_PREFIX="disk-images"
 
-VERSION="FIXME"
+VERSION=${1:-FIXME}
 DATE=$(date +%Y%m%d)
 
 MAJOR_RELEASE=8
-NAME="CentOS-Stream-ec2"
+NAME="CentOS-Stream-ec2-${MAJOR_RELEASE}"
 
 ARCH=$(arch)
 
