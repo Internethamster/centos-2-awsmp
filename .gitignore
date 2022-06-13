@@ -21,3 +21,6 @@ test1.sh
 /ansible/ansible_collections/
 /pyenv/
 /node_modules/
+/package-lock.json
+/package.json
+/ansible/inventory.json
