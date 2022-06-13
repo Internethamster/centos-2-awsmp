@@ -90,11 +90,16 @@
         scope: global
         value: David Duncan
 
-    - name: clone the centos-2-awsmp repository for use
-      ansible.builtin.git:
-        repo: https://github.com/Internethamster/centos-2-awsmp.git
-        dest: ${HOME}/sandbox/centos-2-awsmp
-        version: development
+    - name: Synchronize the git repository from control machine to remote hosts
+      ansible.posix.synchronize:
+        src: /home/davdunc/src/centos-2-awsmp 
+        dest: "{{ ansible_user_dir }}/sandbox/"
+
+    # - name: clone the centos-2-awsmp repository for use
+    #   ansible.builtin.git:
+    #     repo: https://github.com/Internethamster/centos-2-awsmp.git
+    #     dest: ${HOME}/sandbox/centos-2-awsmp
+    #     version: development
 
     - name: Download the awscliv2
       get_url:
