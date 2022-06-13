@@ -12,17 +12,64 @@
         state: directory
         mode: 0750
 
-    - name: Ensure the packages are installed
+    - name: Fix the yum configuration to enable the swap
+      dnf:
+        name:
+          - "https://vault.centos.org/8.5.2111/extras/{{ ansible_architecture }}/os/Packages/centos-release-stream-8.1-1.1911.0.7.el8.{{ ansible_architecture }}.rpm"
+          - "https://vault.centos.org/8.5.2111/extras/{{ ansible_architecture }}/os/Packages/centos-stream-repos-8-3.el8.noarch.rpm"
+        state: present
+      when:
+        - ansible_distribution == "CentOS"
+        - ansible_distribution_release != "Stream"
+        - ansible_distribution_major_version == "8"
+
+    - name: Swap from Linux to Stream
+      ansible.builtin.command: "dnf swap centos-{linux,stream}-repos"
+      become: true
+      when:
+        - ansible_distribution == "CentOS"
+        - ansible_distribution_release != "Stream"
+        - ansible_distribution_major_version == "8"
+
+    - name: Ensure the epel release is enabled
+      ansible.builtin.yum:
+        name:
+          - epel-release
+      become: true
+      when:
+        - ansible_distribution == "CentOS"
+        - ansible_distribution_major_version == "7"
+
+    # - name: Install the entire git222 on C7
+    #   ansible.builtin.yum:
+    #     name:
+    #       - git222
+    #   become: true
+    #   when:
+    #     - ansible_distribution == "CentOS"
+    #     - ansible_distribution_major_version == "7"
+
+    - name: Install git-credential-libsecret on CS8
       ansible.builtin.dnf:
+        name:
+          - git-credential-libsecret
+      become: true
+      when:
+        - ansible_distribution == "CentOS"
+        - ansible_distribution_major_version == "8"
+
+
+    - name: Ensure the packages are installed
+      ansible.builtin.yum:
         name:
           - jq
           - wget
           - git
           - libguestfs-bash-completion
           - rpm-build
-          - git-credential-libsecret
           - unzip
           - libguestfs-tools-c
+          - emacs-nox # Include my editor of choice
       become: true
 
     - name: configure the instance to store credentials in the case that they are needed
