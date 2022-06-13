@@ -5,9 +5,6 @@
   remote_user: builder
   gather_facts: true
 
-  vars:
-    ec2_architecture: x86_64
-
   tasks:
     - name: Create Sandbox directory
       ansible.builtin.file:
