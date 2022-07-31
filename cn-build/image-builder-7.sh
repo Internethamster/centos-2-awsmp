@@ -4,7 +4,7 @@ set -x -euo pipefail
 
 NAME="CentOS-7"
 ARCH="x86_64"
-RELEASE="2003"
+RELEASE="${RELEASE:-2111}"
 VERSION=${1:-FIXME}
 
 DATE=$(date +%Y%m%d)
