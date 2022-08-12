@@ -32,6 +32,4 @@ keyed_groups:
     parent_group: "project"
 hostnames:
   - dns-name
-  - private-dns-name
   - network-interface.addresses.primary
-  - private-ip-address
