@@ -39,6 +39,7 @@ cleanarm:
 
 
 clean: cleanx86 cleanarm
-	rm -f inventory.json
+	rm -f inventory-std.json
+	rm -f inventory-cn.json
 
 all: clean deploy inventory
