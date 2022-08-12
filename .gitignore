@@ -24,5 +24,4 @@ test1.sh
 /package-lock.json
 /package.json
 /ansible/inventory.json
-/ansible/inventory-cn.json
-/ansible/inventory-std.json
+ansible/inventory-*.json
