@@ -138,7 +138,15 @@ else
     INSTANCE_TYPE="c5n.large"
 fi
 
+
+
 err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
 aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID \
     --image-id $ImageId --instance-type $INSTANCE_TYPE --key-name "previous" \
     --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && rm -f ./${IMAGE_NAME}.raw
+
+SSM_NAME=${DATE}-${VERSION}
+aws ssm put-parameter --name "/amis/centos/${ARCHITECTURE}/centos-stream-ec2-8/${SSM_NAME}"  \
+    --type "String" --value $ImageId --data-type "aws:ec2:image"
+aws ssm put-parameter --name "/amis/centos/${ARCHITECTURE}/centos-stream-ec2-8/latest"  \
+    --type "String" --value $ImageId --data-type "aws:ec2:image"
