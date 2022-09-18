@@ -124,7 +124,7 @@ rm ${IMAGE_NAME}.raw
 
 DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
 
-IMPORT_SNAP=$(aws ec2 import-snapshot ${DRY_RUN} --region $S3_REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container $DISK_CONTAINER) &&\
+IMPORT_SNAP=$(aws ec2 import-snapshot ${DRY_RUN} --region $S3_REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME $MAJOR_RELEASE ($ARCH) Image" --disk-container $DISK_CONTAINER) &&\
     err "snapshot suceessfully imported to $IMPORT_SNAP"
 
 snapshotTask=$(echo $IMPORT_SNAP | jq -Mr '.ImportTaskId')
