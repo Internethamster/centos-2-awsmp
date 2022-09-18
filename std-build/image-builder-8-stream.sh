@@ -167,4 +167,3 @@ aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID \
 # Share AMI with AWS Marketplace
 # err "./share-amis.sh $snapshotId $ImageId"
 # ./share-amis.sh $snapshotId $ImageId
-
