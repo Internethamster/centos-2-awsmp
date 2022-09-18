@@ -4,7 +4,7 @@
 # Set up a file that includes the content
 set -euo pipefail
 
-DRY_RUN="--dry-run"
+DRY_RUN="" # Dry run is handled on the command line with the "-d" command option
 
 S3_BUCKET="aws-marketplace-upload-centos"
 S3_PREFIX="disk-images"
@@ -31,8 +31,9 @@ if [[ "$ARCH" == "aarch64" ]]; then
     INSTANCE_TYPE="m6g.large"
 else
     ARCHITECTURE="$(arch)"
-    CPE_RELEASE=1
-    CPE_RELEASE_DATE=20220125
+    CPE_RELEASE=0
+    CPE_RELEASE_DATE=20220913
+    CPE_RELEASE_REVISION=
 
     QEMU_IMG="qemu-img"
     VIRT_CUSTOMIZE="virt-customize"
