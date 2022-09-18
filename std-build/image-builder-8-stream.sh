@@ -14,7 +14,6 @@ release_short="CentOS-Cloud"
 release_version='8'
 MAJOR_RELEASE=$release_version
 NAME="CentOS-Stream-ec2"
-NAME="CentOS-Stream-ec2-${MAJOR_RELEASE}"
 ARCH=$(arch)
 
 if [[ "$ARCH" == "aarch64" ]]; then
