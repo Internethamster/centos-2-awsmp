@@ -57,15 +57,15 @@ fi
 if [ "$VERSION" == "FIXME" ]
 then
     VERSION=
-    echo $(( $(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt) + 1 )) > ${NAME}-${MAJOR_RELEASE}-${DATE}.txt
-    VERSION=$(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt)
+    echo $(( $(cat ${NAME}-${DATE}.txt) + 1 )) > ${NAME}-${DATE}.txt
+    VERSION=$(cat ${NAME}-${DATE}.txt)
 fi
 
-IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
+IMAGE_NAME="${NAME}-${DATE}.${VERSION}.${ARCH}"
 err "IMAGE NAME: ${IMAGE_NAME}"
 FILE="${IMAGE_NAME}.qcow2"
 
-LINK=https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}.qcow2
+LINK=https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}.qcow2
 
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
