@@ -1,26 +1,27 @@
 #!/bin/bash
 # CENTOS-Stream-8 BUILDER
 
-# Set up a file that includes the content 
+# Set up a file that includes the content
 set -euo pipefail
 
 DRY_RUN="--dry-run"
 
 S3_BUCKET="aws-marketplace-upload-centos"
 S3_PREFIX="disk-images"
-
-VERSION=${1:-FIXME}
 DATE=$(date +%Y%m%d)
-
-MAJOR_RELEASE=8
+release_name="CentOS-Cloud"
+release_short="CentOS-Cloud"
+release_version='8'
+MAJOR_RELEASE=$release_version
+NAME="CentOS-Stream-ec2"
 NAME="CentOS-Stream-ec2-${MAJOR_RELEASE}"
-
 ARCH=$(arch)
 
 if [[ "$ARCH" == "aarch64" ]]; then
     ARCHITECTURE="arm64"
-    CPE_RELEASE=1
-    CPE_RELEASE_DATE=20220125
+    CPE_RELEASE=0
+    CPE_RELEASE_DATE=20220913
+    CPE_RELEASE_REVISION=
 
     QEMU_IMG="taskset -c 1 qemu-img"
     VIRT_CUSTOMIZE="taskset -c 1 virt-customize"
