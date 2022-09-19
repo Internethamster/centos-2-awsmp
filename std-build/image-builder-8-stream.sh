@@ -138,16 +138,16 @@ done
 err "Import snapshot task is complete"
 
 snapshotId=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks ${DRY_RUN} --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
-
 err "Created snapshot: $snapshotId"
 
 sleep 20
-
-DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTermination\":true, \"SnapshotId\":\"${snapshotId}\", \"VolumeSize\":10, \"VolumeType\":\"gp2\"}}]"
+IAD_snap=copySnapshotToRegion
+err "Created $IAD_snap in us-east-1"
+DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTermination\":true, \"SnapshotId\":\"${IAD_snap}\", \"VolumeSize\":10, \"VolumeType\":\"gp2\"}}]"
 
 err $DEVICE_MAPPINGS
 
-ImageId=$(aws ec2 --region $S3_REGION register-image ${DRY_RUN} --region $REGION --architecture=${ARCHITECTURE} \
+ImageId=$(aws ec2 --region us-east-1 register-image ${DRY_RUN} --architecture=${ARCHITECTURE} \
               --description="${NAME}-${MAJOR_RELEASE} (${ARCHITECTURE}) for HVM Instances" \
               --virtualization-type hvm  \
               --root-device-name '/dev/sda1' \
@@ -156,11 +156,11 @@ ImageId=$(aws ec2 --region $S3_REGION register-image ${DRY_RUN} --region $REGION
               --block-device-mappings "${DEVICE_MAPPINGS}" \
               --output text)
 
-err "Produced Image ID $ImageId"
-echo "SNAPSHOT : ${snapshotId}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MAJOR_RELEASE}.txt
+err "Produced Image ID $ImageId in us-east-1"
+echo "SNAPSHOT : ${IAD_snap}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MAJOR_RELEASE}.txt
 
 err "aws ec2 run-instances ${DRY_RUN} --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
-aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID \
+aws ec2 run-instances --region us-east-1 --subnet-id $SUBNET_ID \
     --image-id $ImageId --instance-type ${INSTANCE_TYPE} --key-name "previous" \
     --security-group-ids $SECURITY_GROUP_ID ${DRY_RUN}
 

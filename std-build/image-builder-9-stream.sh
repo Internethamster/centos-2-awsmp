@@ -1,37 +1,26 @@
 #!/bin/bash
-# CENTOS-Stream-9 BUILDER
-# CentOS Project moved from qcow2 to raw disk images for ec2
-# CPE updated the name for the aarch64 instance to include the arch in two places.
-# It's annoying, but now the names have to go in the arch-specific config
+# CENTOS-Stream-8 BUILDER
+
+# Set up a file that includes the content
 set -euo pipefail
-DRY_RUN=""
-AWS_PAGER=""
+
+DRY_RUN="" # Dry run is handled on the command line with the "-d" command option
+
 S3_BUCKET="aws-marketplace-upload-centos"
 S3_PREFIX="disk-images"
-
-VERSION="FIXME"
 DATE=$(date +%Y%m%d)
-
-MAJOR_RELEASE=9
+release_name="CentOS-Cloud"
+release_short="CentOS-Cloud"
+release_version='9'
+MAJOR_RELEASE=$release_version
 NAME="CentOS-Stream-ec2"
-FILE_FORMAT="raw"
 ARCH=$(arch)
-
-if [ ! -e ${NAME}-${DATE}.txt ]; then
-    echo "0" > ${NAME}-${DATE}.txt
-fi
-
-if [ "$VERSION" == "FIXME" ]
-then
-    VERSION=
-    echo $(( $(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt) + 1 )) > ${NAME}-${MAJOR_RELEASE}-${DATE}.txt
-    VERSION=$(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt)
-fi
 
 if [[ "$ARCH" == "aarch64" ]]; then
     ARCHITECTURE="arm64"
-    CPE_RELEASE=4
-    CPE_RELEASE_DATE=20220321
+    CPE_RELEASE=0
+    CPE_RELEASE_DATE=20220914
+    CPE_RELEASE_REVISION=
 
     QEMU_IMG="taskset -c 1 qemu-img"
     VIRT_CUSTOMIZE="taskset -c 1 virt-customize"
@@ -39,12 +28,11 @@ if [[ "$ARCH" == "aarch64" ]]; then
     VIRT_SYSPREP="taskset -c 1 virt-sysprep"
 
     INSTANCE_TYPE="m6g.large"
-
-    NAME="${NAME}-${ARCH}"
 else
     ARCHITECTURE="$(arch)"
-    CPE_RELEASE=4
-    CPE_RELEASE_DATE=20220321
+    CPE_RELEASE=0
+    CPE_RELEASE_DATE=20220914
+    CPE_RELEASE_REVISION=
 
     QEMU_IMG="qemu-img"
     VIRT_CUSTOMIZE="virt-customize"
@@ -62,20 +50,30 @@ then
     exit_abnormal
 fi
 
+if [ ! -e ${NAME}-${DATE}.txt ]; then
+    echo "0" > ${NAME}-${DATE}.txt
+fi
+
+if [ "$VERSION" == "FIXME" ]
+then
+    VERSION=
+    echo $(( $(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt) + 1 )) > ${NAME}-${MAJOR_RELEASE}-${DATE}.txt
+    VERSION=$(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt)
+fi
+
 IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 err "IMAGE NAME: ${IMAGE_NAME}"
-FILE="${IMAGE_NAME}.${FILE_FORMAT}"
+FILE="${IMAGE_NAME}.qcow2"
 
-LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}.${FILE_FORMAT}"
+LINK=https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}.qcow2
 
-# from shared_functions
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
-# from shared_functions
 SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
 
-# from shared_functions
 SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
+
+IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 
 if [[ $(curl -Is ${LINK}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
    then
@@ -100,13 +98,8 @@ fi
 
 err "$LINK retrieved and saved at $(pwd)/${FILE}"
 
-if [[ "$FILE_FORMAT" != "raw" ]]
-then
-
-   ${QEMU_IMG} convert ./${FILE} ${IMAGE_NAME}.raw && rm -f ${FILE}
-   err "${IMAGE_NAME}.raw created"
-
-fi
+${QEMU_IMG} convert ./${FILE} ${IMAGE_NAME}.raw && rm -f ${FILE}
+err "${IMAGE_NAME}.raw created"
 
 ${VIRT_EDIT} -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
@@ -131,7 +124,7 @@ rm ${IMAGE_NAME}.raw
 
 DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
 
-IMPORT_SNAP=$(aws ec2 import-snapshot ${DRY_RUN} --region $S3_REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container $DISK_CONTAINER) &&\
+IMPORT_SNAP=$(aws ec2 import-snapshot ${DRY_RUN} --region $S3_REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME $MAJOR_RELEASE ($ARCH) Image" --disk-container $DISK_CONTAINER) &&\
     err "snapshot suceessfully imported to $IMPORT_SNAP"
 
 snapshotTask=$(echo $IMPORT_SNAP | jq -Mr '.ImportTaskId')
@@ -145,16 +138,16 @@ done
 err "Import snapshot task is complete"
 
 snapshotId=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks ${DRY_RUN} --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
-
 err "Created snapshot: $snapshotId"
 
 sleep 20
-
-DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTermination\":true, \"SnapshotId\":\"${snapshotId}\", \"VolumeSize\":10, \"VolumeType\":\"gp2\"}}]"
+IAD_snap=copySnapshotToRegion
+err "Created $IAD_snap in us-east-1"
+DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTermination\":true, \"SnapshotId\":\"${IAD_snap}\", \"VolumeSize\":10, \"VolumeType\":\"gp2\"}}]"
 
 err $DEVICE_MAPPINGS
 
-ImageId=$(aws ec2 --region $S3_REGION register-image ${DRY_RUN} --region $REGION --architecture=${ARCHITECTURE} \
+ImageId=$(aws ec2 --region us-east-1 register-image ${DRY_RUN} --architecture=${ARCHITECTURE} \
               --description="${NAME}-${MAJOR_RELEASE} (${ARCHITECTURE}) for HVM Instances" \
               --virtualization-type hvm  \
               --root-device-name '/dev/sda1' \
@@ -163,11 +156,11 @@ ImageId=$(aws ec2 --region $S3_REGION register-image ${DRY_RUN} --region $REGION
               --block-device-mappings "${DEVICE_MAPPINGS}" \
               --output text)
 
-err "Produced Image ID $ImageId"
-echo "SNAPSHOT : ${snapshotId}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MINOR_RELEASE}.txt
+err "Produced Image ID $ImageId in us-east-1"
+echo "SNAPSHOT : ${IAD_snap}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MAJOR_RELEASE}.txt
 
 err "aws ec2 run-instances ${DRY_RUN} --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
-aws ec2 run-instances --region $S3_REGION --subnet-id $SUBNET_ID \
+aws ec2 run-instances --region us-east-1 --subnet-id $SUBNET_ID \
     --image-id $ImageId --instance-type ${INSTANCE_TYPE} --key-name "previous" \
     --security-group-ids $SECURITY_GROUP_ID ${DRY_RUN}
 
