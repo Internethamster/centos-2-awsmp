@@ -57,15 +57,15 @@ fi
 if [ "$VERSION" == "FIXME" ]
 then
     VERSION=
-    echo $(( $(cat ${NAME}-${DATE}.txt) + 1 )) > ${NAME}-${DATE}.txt
-    VERSION=$(cat ${NAME}-${DATE}.txt)
+    echo $(( $(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt) + 1 )) > ${NAME}-${MAJOR_RELEASE}-${DATE}.txt
+    VERSION=$(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt)
 fi
 
-IMAGE_NAME="${NAME}-${DATE}.${VERSION}.${ARCH}"
+IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 err "IMAGE NAME: ${IMAGE_NAME}"
 FILE="${IMAGE_NAME}.qcow2"
 
-LINK=https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}.qcow2
+LINK=https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}.qcow2
 
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
@@ -73,7 +73,7 @@ SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
 
 SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
 
-IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-ec2-${CPE_RELEASE_DATE}.${CPE_RELEASE}-${DATE}.${VERSION}.${ARCH}"
+IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 
 if [[ $(curl -Is ${LINK}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
    then
