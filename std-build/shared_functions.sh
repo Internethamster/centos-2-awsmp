@@ -88,7 +88,7 @@ function copySnapshotToRegion {
 
 	local IAD_snap=$(aws ec2 copy-snapshot --source-region $REGION --source-snapshot-id $snapshotId \
 			     --region us-east-1 \
-			     --description "Import Base CentOS${MAJOR_RELEASE} ${ARCHITECTURE} Image" \
+			     --description "Import Base ${NAME}-${MAJOR_RELEASE} ${ARCHITECTURE} Image" \
 			     --query 'SnapshotId' --output text
 	      )
     fi
