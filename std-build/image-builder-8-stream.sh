@@ -143,8 +143,9 @@ err "Created snapshot: $snapshotId"
 sleep 20
 IAD_snap=$(copySnapshotToRegion)
 err "Created $IAD_snap in us-east-1"
-while [[ "$(aws ec2 describe-snapshots --snapshot-ids $IAD_snap --region us-east-1 --query 'Snapshots[0].State' --output text)" == "pending" ]]
+while [[ "$(aws ec2 describe-snapshots --snapshot-ids $IAD_snap --region us-east-1 --query 'Snapshots[0].State' --output text)" != "completed" ]]
 do
+    set -x
     err "snapshot copy to IAD is still active."
     sleep 60
 done
