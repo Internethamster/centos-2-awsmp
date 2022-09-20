@@ -13,7 +13,7 @@
         mode: 0750
 
     - name: Fix the yum configuration to enable the swap
-      dnf:
+      ansible.builtin.dnf:
         name:
           - "https://vault.centos.org/8.5.2111/extras/{{ ansible_architecture }}/os/Packages/centos-release-stream-8.1-1.1911.0.7.el8.{{ ansible_architecture }}.rpm"
           - "https://vault.centos.org/8.5.2111/extras/{{ ansible_architecture }}/os/Packages/centos-stream-repos-8-3.el8.noarch.rpm"
@@ -74,19 +74,19 @@
           - emacs-nox # Include my editor of choice
       become: true
 
-    - name: configure the instance to store credentials in the case that they are needed
+    - name: Configure the instance to store credentials in the case that they are needed
       community.general.git_config:
         name: credential.helper
         scope: global
         value: store
 
-    - name: configure the user email for commit management to the ansible script variable
+    - name: Configure the user email for commit management to the ansible script variable
       community.general.git_config:
         name: user.email
         scope: global
         value: davdunc@amazon.com
 
-    - name: configure the user name for commit management to the ansible script variable
+    - name: Configure the user name for commit management to the ansible script variable
       community.general.git_config:
         name: user.name
         scope: global
