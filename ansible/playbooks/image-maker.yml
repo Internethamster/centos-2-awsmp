@@ -94,7 +94,7 @@
 
     - name: Synchronize the git repository from control machine to remote hosts
       ansible.posix.synchronize:
-        src: /home/davdunc/src/centos-2-awsmp
+        src: "${HOME}/src/centos-2-awsmp"
         dest: "{{ ansible_user_dir }}/sandbox/"
 
     # - name: clone the centos-2-awsmp repository for use
@@ -104,19 +104,20 @@
     #     version: development
 
     - name: Download the awscliv2
-      get_url:
+      ansible.builtin.get_url:
         url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip"
-        dest: ${HOME}/sandbox/
+        dest: "{{ ansible_user_dir }}/sandbox/"
+        mode: '0644'
       register: awscliv2
 
     - name: "Unzip the awscliv2 on {{ ansible_architecture }}"
       ansible.builtin.unarchive:
-        dest: ${HOME}/sandbox/
-        remote_src: yes
+        dest: "{{ ansible_user_dir }}/sandbox/"
+        remote_src: true
         src: "${HOME}/sandbox/awscli-exe-linux-{{ ansible_architecture }}.zip"
 
     - name: "Install the AWSCLIv2"
-      command: ./aws/install -i ${HOME}/lib/ -b ${HOME}/bin
+      ansible.builtin.command: ./aws/install -i ${HOME}/lib/ -b ${HOME}/bin
       args:
-        chdir: ${HOME}/sandbox
-        creates: ${HOME}/bin/aws
+        chdir: "{{ ansible_user_dir }}/sandbox"
+        creates: "{{ ansible_user_dir }}/bin/aws"
