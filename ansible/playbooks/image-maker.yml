@@ -18,10 +18,12 @@
           - "https://vault.centos.org/8.5.2111/extras/{{ ansible_architecture }}/os/Packages/centos-release-stream-8.1-1.1911.0.7.el8.{{ ansible_architecture }}.rpm"
           - "https://vault.centos.org/8.5.2111/extras/{{ ansible_architecture }}/os/Packages/centos-stream-repos-8-3.el8.noarch.rpm"
         state: present
+      become: true
       when:
         - ansible_distribution == "CentOS"
         - ansible_distribution_release != "Stream"
         - ansible_distribution_major_version == "8"
+
 
     - name: Swap from Linux to Stream
       ansible.builtin.command: "dnf swap centos-{linux,stream}-repos"
@@ -92,7 +94,7 @@
 
     - name: Synchronize the git repository from control machine to remote hosts
       ansible.posix.synchronize:
-        src: /home/davdunc/src/centos-2-awsmp 
+        src: /home/davdunc/src/centos-2-awsmp
         dest: "{{ ansible_user_dir }}/sandbox/"
 
     # - name: clone the centos-2-awsmp repository for use
