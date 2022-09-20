@@ -141,8 +141,14 @@ snapshotId=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks ${DRY_RU
 err "Created snapshot: $snapshotId"
 
 sleep 20
-IAD_snap=copySnapshotToRegion
+IAD_snap=$(copySnapshotToRegion)
 err "Created $IAD_snap in us-east-1"
+while [[ "$(aws ec2 describe-snapshots --snapshot-ids $IAD_snap --region us-east-1 --query 'Snapshots[0].State')" != "completed" ]]
+do
+    err "snapshot copy to IAD is still active."
+    sleep 60
+done
+
 DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTermination\":true, \"SnapshotId\":\"${IAD_snap}\", \"VolumeSize\":10, \"VolumeType\":\"gp2\"}}]"
 
 err $DEVICE_MAPPINGS
