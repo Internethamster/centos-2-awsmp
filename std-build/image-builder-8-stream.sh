@@ -171,5 +171,5 @@ aws ec2 run-instances --region us-east-1 --subnet-id $SUBNET_ID \
     --security-group-ids $SECURITY_GROUP_ID ${DRY_RUN}
 
 # Share AMI with AWS Marketplace
-# err "./share-amis.sh $snapshotId $ImageId"
-# ./share-amis.sh $snapshotId $ImageId
+err "${0%/*}/share-amis.sh $ImageId"
+${0%/*}/share-amis.sh $ImageId
