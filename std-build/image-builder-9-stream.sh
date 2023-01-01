@@ -1,5 +1,5 @@
 #!/bin/bash
-# CENTOS-Stream-8 BUILDER
+# CentOS-Stream-9 BUILDER
 
 # Set up a file that includes the content
 set -euo pipefail
