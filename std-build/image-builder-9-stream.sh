@@ -19,7 +19,7 @@ ARCH=$(arch)
 if [[ "$ARCH" == "aarch64" ]]; then
     ARCHITECTURE="arm64"
     CPE_RELEASE=0
-    CPE_RELEASE_DATE=20220914
+    CPE_RELEASE_DATE=20221219
     CPE_RELEASE_REVISION=
 
     QEMU_IMG="taskset -c 1 qemu-img"
@@ -31,7 +31,7 @@ if [[ "$ARCH" == "aarch64" ]]; then
 else
     ARCHITECTURE="$(arch)"
     CPE_RELEASE=0
-    CPE_RELEASE_DATE=20220914
+    CPE_RELEASE_DATE=20221219
     CPE_RELEASE_REVISION=
 
     QEMU_IMG="qemu-img"
