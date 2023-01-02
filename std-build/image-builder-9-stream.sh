@@ -21,11 +21,11 @@ if [[ "$ARCH" == "aarch64" ]]; then
     CPE_RELEASE=0
     CPE_RELEASE_DATE=20221219
     CPE_RELEASE_REVISION=
-
-    QEMU_IMG="taskset -c 1 qemu-img"
-    VIRT_CUSTOMIZE="taskset -c 1 virt-customize"
-    VIRT_EDIT="taskset -c 1 virt-edit"
-    VIRT_SYSPREP="taskset -c 1 virt-sysprep"
+    ISOLATE="taskset -c 1"
+    QEMU_IMG="$ISOLATE qemu-img"
+    VIRT_CUSTOMIZE="$ISOLATE virt-customize"
+    VIRT_EDIT="$ISOLATE virt-edit"
+    VIRT_SYSPREP="$ISOLATE virt-sysprep"
 
     INSTANCE_TYPE="m6g.large"
 else
@@ -63,9 +63,9 @@ fi
 
 IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 err "IMAGE NAME: ${IMAGE_NAME}"
-FILE="${IMAGE_NAME}.qcow2"
+FILE="${NAME}-${ARCH}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}.qcow2"
 
-LINK=https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${ARCH}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}.qcow2
+LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${FILE}"
 
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
