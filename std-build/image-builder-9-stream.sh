@@ -85,7 +85,7 @@ do
 
     if [[ $(curl -Is ${LINK}.${FILE_TYPE}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
     then
-        err "${LINK}.${FILE_TYPE} to be retrieved and saved at ./${FILE}.${FILE_TYPE}.xz"
+        err "${LINK}.${FILE_TYPE}.xz to be retrieved and saved at ./${FILE}.${FILE_TYPE}.xz"
         FILE=${FILE}.${FILE_TYPE}
         FILE_STATE="COMPRESSED"
         FILE_FOUND=${FILE_TYPE}
