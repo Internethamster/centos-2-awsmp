@@ -63,7 +63,8 @@ fi
 
 IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 err "IMAGE NAME: ${IMAGE_NAME}"
-FILE="${NAME}-${ARCH}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}.qcow2"
+# Move from qcow2 to Raw images is important
+FILE="${NAME}-${ARCH}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}"
 
 LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${FILE}"
 
@@ -75,32 +76,47 @@ SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
 
 IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 
-if [[ $(curl -Is ${LINK}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
-   then
-       err "$LINK to be retrieved and saved at ./${FILE}.xz"
-       curl -C - -o ${FILE}.xz ${LINK}.xz
-       FILE_STATE="COMPRESSED"
-elif [[ $(curl -Is ${LINK} | awk '/HTTP/ { print $2 }') == 200 ]]
-then
-       err "$LINK to be retrieved and saved at ./${FILE}"
-       curl -C - -o ${FILE} ${LINK}
-       FILE_STATE="NORMAL"
-else
-    err "$FILE was not located"
-    exit_abnormal
-fi
+# identify the file type in order of preference. It's possible that multiples exist,
+#   but Ideally we want compressed over uncompressed, then raw type over qcow2 and
+#   qcow2 over qcow... Anything else needs intervention
+unset FILE_FOUND
+for FILE_TYPE in raw qcow2 qcow
+do
+
+    if [[ $(curl -Is ${LINK}.${FILE_TYPE}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
+    then
+        err "${LINK}.${FILE_TYPE} to be retrieved and saved at ./${FILE}.${FILE_TYPE}.xz"
+        FILE=${FILE}.${FILE_TYPE}
+        FILE_STATE="COMPRESSED"
+        FILE_FOUND=${FILE_TYPE}
+        curl -C - -o ${FILE}.xz ${LINK}.${FILE_TYPE}.xz
+    elif [[ $(curl -Is ${LINK}.${FILE_TYPE} | awk '/HTTP/ { print $2 }') == 200 ]]
+    then
+        err "${LINK}.${FILE_TYPE} to be retrieved and saved at ./${FILE}.${FILE_TYPE}"
+        FILE_STATE="NORMAL"
+        FILE=${FILE}.${FILE_TYPE}
+        FILE_FOUND=$FILE_TYPE
+        curl -C - -o ${FILE} ${LINK}.${FILE_TYPE}
+    else
+        continue
+    fi
+    [[ -n $FILE_FOUND ]] && err "File type of $FILE_FOUND located."
+    [[ -n $FILE_FOUND ]] && break
+done
+[[ -z $FILE_FOUND ]] && err "ERROR: 404 File not found. Exiting!"
 
 if [[ "$FILE_STATE" == "COMPRESSED" ]]
    then
        err "xz -d ${FILE}.xz"
        xz -d --force ${FILE}.xz && FILE_STATE="NORMAL"
 fi
+err "${LINK}.${FILE_FOUND} retrieved and saved at $(pwd)/${FILE}"
 
-err "$LINK retrieved and saved at $(pwd)/${FILE}"
-
-${QEMU_IMG} convert ./${FILE} ${IMAGE_NAME}.raw && rm -f ${FILE}
-err "${IMAGE_NAME}.raw created"
-
+if [[ "$FILE_FOUND" != "raw" ]]
+then
+    ${QEMU_IMG} convert $(pwd)/${FILE} ${IMAGE_NAME}.raw && rm -f ${FILE}
+    err "${IMAGE_NAME}.raw created from ${FILE}"
+fi
 ${VIRT_EDIT} -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
 
