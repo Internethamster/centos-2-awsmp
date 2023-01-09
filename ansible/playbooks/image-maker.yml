@@ -5,6 +5,12 @@
   remote_user: builder
   gather_facts: true
 
+  collections:
+    - ansible.builtin
+    - community.general
+    - community.aws
+    - amazon.aws
+
   tasks:
     - name: Create Sandbox directory
       ansible.builtin.file:
