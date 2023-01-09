@@ -137,3 +137,27 @@
       args:
         chdir: "{{ ansible_user_dir }}/sandbox"
         creates: "{{ ansible_user_dir }}/bin/aws"
+
+    - name: Set the Server keepalive interval in the SSH config
+      ansible.builtin.blockinfile:
+        path: /etc/ssh/ssh_config
+        block: |
+          ServerInterval 120
+      become: true
+
+    - name: The SSH user for Ansible should not be allowed to login with password auth
+      ansible.builtin.blockinfile:
+        path: /etc/ssh/sshd_config
+        block: |
+          Match User builder
+          PasswordAuthentication no
+      become: true
+      notify: Restart sshd
+
+# ------- HANDLERS -------
+  handlers:
+    - name: Restart sshd
+      ansible.builtin.service:
+        name: sshd
+        state: restarted
+      become: true
