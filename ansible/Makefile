@@ -26,7 +26,9 @@ deployarm:
 
 deploy: deployx86 deployarm inventory
 	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "stage=$(STAGE)" ./playbooks/image-maker.yml
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "stage=$(STAGE)" ./playbooks/register_cs8_image.yml
 	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "stage=$(STAGE)" ./playbooks/image-maker.yml
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "stage=$(STAGE)" ./playbooks/register_cs8_image-cn.yml
 
 cleanx86:
 	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=x86_64" ./clean-std.yml -vvv
