@@ -12,7 +12,7 @@
         state: directory
         mode: 0750
 
-    - name: Fix the yum configuration to enable the swap
+    - name: fix the yum configuration to enable the swap
       ansible.builtin.dnf:
         name:
           - "https://vault.centos.org/8.5.2111/extras/{{ ansible_architecture }}/os/Packages/centos-release-stream-8.1-1.1911.0.7.el8.{{ ansible_architecture }}.rpm"
