@@ -79,7 +79,8 @@ IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}-${DATE}.
 # identify the file type in order of preference. It's possible that multiples exist,
 #   but Ideally we want compressed over uncompressed, then raw type over qcow2 and
 #   qcow2 over qcow... Anything else needs intervention
-unset FILE_FOUND
+FILE_FOUND="None"
+
 for FILE_TYPE in raw qcow2 qcow
 do
 
@@ -100,10 +101,10 @@ do
     else
         continue
     fi
-    [[ -n $FILE_FOUND ]] && err "File type of $FILE_FOUND located."
-    [[ -n $FILE_FOUND ]] && break
+    [[ "$FILE_FOUND" != "None" ]] && err "File type of $FILE_FOUND located."
+    [[ "$FILE_FOUND" != "None" ]] && break
 done
-[[ -z $FILE_FOUND ]] && err "ERROR: 404 File not found. Exiting!"
+[[ "$FILE_FOUND" == "None" ]] && err "ERROR: 404 File not found. Exiting!"
 
 if [[ "$FILE_STATE" == "COMPRESSED" ]]
    then
