@@ -113,3 +113,11 @@ An error occurred (AuthFailure) when calling the CopyImage operation: AWS was no
     "ImageId": "ami-08f4c469c1791852b"
 }
 ```
+# Notes on Development
+
+* How to pull the development branch.
+
+```
+curl -O --clobber https://github.com/Internethamster/centos-2-awsmp/archive/development/centos-2-awsmp-<version>.tar.gz
+```
+
