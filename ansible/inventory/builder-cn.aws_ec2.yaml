@@ -5,7 +5,11 @@ regions:
   - cn-north-1
   - cn-northwest-1
 filters:
-  "tag:task": image-builder
+  "tag:task":
+    - image-builder
+    - image-downloader
+    - awsmp-centos
+    - awsmp-fedora
 keyed_groups:
   # Add e.g. x86_64 hosts to an arch_x86_64 group
   - prefix: arch

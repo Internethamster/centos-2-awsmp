@@ -1,9 +1,10 @@
 ---
 - name: Deploy a builder for CentOS images
-  hosts: tag_task_image_builder
+  hosts: localhost
+  connection: local
   remote_user: builder
 
-  gather_facts: no
+  gather_facts: false
 
   vars:
     region: cn-northwest-1
@@ -29,5 +30,12 @@
         instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
         tags:
           task: image-builder
-      delegate_to: localhost
-      
+
+    - name: Destroy instances for building images
+      community.aws.ec2_instance:
+        state: terminated
+        region: "{{ region }}"
+        profile: "{{ profile }}"
+        instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
+        tags:
+          task: image-downloader
