@@ -178,10 +178,10 @@ ImageId=$(aws ec2 --region us-east-1 register-image ${DRY_RUN} --architecture=${
 err "Produced Image ID $ImageId in us-east-1"
 echo "SNAPSHOT : ${IAD_snap}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MAJOR_RELEASE}.txt
 
-err "aws ec2 run-instances ${DRY_RUN} --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
-aws ec2 run-instances --region us-east-1 --subnet-id $SUBNET_ID \
+err "aws ec2 run-instances ${DRY_RUN} --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name \"davdunc@amazon.com\" --security-group-ids $SECURITY_GROUP_ID"
+aws ec2 run-instances ${DRY_RUN} --region us-east-1 --subnet-id $SUBNET_ID \
     --image-id $ImageId --instance-type ${INSTANCE_TYPE} --key-name "previous" \
-    --security-group-ids $SECURITY_GROUP_ID ${DRY_RUN}
+    --security-group-ids $SECURITY_GROUP_ID
 
 # Share AMI with AWS Marketplace
 # err "./share-amis.sh $snapshotId $ImageId"
