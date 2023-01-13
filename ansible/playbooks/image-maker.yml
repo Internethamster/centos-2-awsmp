@@ -126,7 +126,7 @@
         mode: '0644'
       register: awscliv2
 
-    - name: "Unzip the awscliv2 on {{ ansible_architecture }}"
+    - name: "Unzip the awscliv2 content to the host"
       ansible.builtin.unarchive:
         dest: "{{ ansible_user_dir }}/sandbox/"
         remote_src: true
