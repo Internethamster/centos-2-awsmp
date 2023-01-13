@@ -17,3 +17,4 @@ test.sh
 test1.sh
 /std-build/*.raw
 */CentOS-Stream-ec2-*
+/.DS_Store
