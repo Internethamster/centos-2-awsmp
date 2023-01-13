@@ -160,7 +160,7 @@ snapshotId=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks ${DRY_RU
 err "Created snapshot: $snapshotId"
 
 sleep 20
-IAD_snap=copySnapshotToRegion
+IAD_snap=copySnapshotToRegion()
 err "Created $IAD_snap in us-east-1"
 DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTermination\":true, \"SnapshotId\":\"${IAD_snap}\", \"VolumeSize\":10, \"VolumeType\":\"gp2\"}}]"
 
