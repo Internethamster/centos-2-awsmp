@@ -63,8 +63,8 @@ fi
 
 IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 err "IMAGE NAME: ${IMAGE_NAME}"
-# Move from qcow2 to Raw images is important
-FILE="${NAME}-${ARCH}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}"
+# Move from qcow2 to Raw images is importantm
+FILE="${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}"
 
 LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${FILE}"
 
@@ -117,6 +117,8 @@ if [[ "$FILE_FOUND" != "raw" ]]
 then
     ${QEMU_IMG} convert $(pwd)/${FILE} ${IMAGE_NAME}.raw && rm -f ${FILE}
     err "${IMAGE_NAME}.raw created from ${FILE}"
+else
+    mv $(pwd)/${FILE} ${IMAGE_NAME}.raw
 fi
 ${VIRT_EDIT} -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
