@@ -27,3 +27,4 @@ test1.sh
 /ansible/inventory-cn.json
 /ansible/inventory-std.json
 /.DS_Store
+*~$*
