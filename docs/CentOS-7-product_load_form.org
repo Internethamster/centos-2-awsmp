@@ -1,45 +1,83 @@
+#+options: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline
+#+options: author:t broken-links:nil c:nil creator:nil
+#+options: d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t num:t
+#+options: p:nil pri:nil prop:nil stat:t tags:t tasks:t tex:t
+#+options: timestamp:t title:t toc:t todo:t |:t
+#+title: CentOS-7-product_load_form
+#+date: <2022-03-25 Fri>
+#+author: Duncan
+#+email: davdunc@3c06303f730c.ant.amazon.com
+#+language: en
+#+select_tags: export
+#+exclude_tags: noexport
+#+creator: Emacs 27.2 (Org mode 9.4.4)
 * Product Details
   :PROPERTIES:
   :Product_ID: d9a3032a-921c-4c6d-b150-bde168105e42
   :Product_Code: cvugziknvmxgqna9noibqnnsy
   :Product_Availability: PUBLIC
   :SKU:      CentOS-7-x86_64-UPDATED HVM
-  :Software_by: The CentOS Project
+  :VERSION: 2022-03-19
+  :Software_by: The Community Platform Engineering (CPE) Team at Red Hat
+  :Vendor_AWS_Account_ID: 422151105614
+  :Vendor_Legal_Name: AWS PSA TEAM, Linux
+  :Vendor_Display_Name: Amazon Web Services
+  :Marketplace_ID: A1KAVWRNOS92EQ
   :END:
+  - Accessible AWS Account
+    - 297512042063
+    - 679593333241
+    - 442217272149
+    - 582767206473
+    - 422151105614
+  - EULA URL: https://s3.amazonaws.com/EULA/CentOS_CentOS7HVM_EULA.txt
+  - AgreementType: None
 ** Title
    CentOS 7 (x86_64) - with Updates HVM
 ** Short Description
-   <blank>
+   Consistent, manageable platform that suits a wide variety of
+   deployments. For some open source communities, it is a solid,
+   predictable base to build upon.
 ** Full Description
-   This is an Official CentOS 7 x86_64 HVM image built with a minimal
-   profile, suitable for use in HVM instance types only. The image
-   contains is built privately by the Red Hat Community Platform
-   Engineering team with just enough packages to run within AWS, bring
-   up an SSH Server and allow users to login. This is the default
-   CentOS-7 image that AWS recommends everyone use. It contains updated
-   packages and the images are updated at points in time to include
-   critical security updates.
-   
-* Highlights
-** Highlight 1
-   CentOS Linux images are built with SELINUX set to
-   enforcing mode. The CentOS team tests the images with both Selinux
-   enabled as well as permissive.
-** Highlight 2
-   With the release of CentOS-7.2009 cloud-init now includes support for
-   IMDSv2 in all CentOS AMI's. The default user is configured as
-   'centos'. Once the instance is running, you will
-   be able to login and use sudo for privileged commands.
-** Highlight 3
-   For details, review the CentOS on AWS Cloud wiki page at
-   http://wiki.centos.org/Cloud/AWS for details on how these images
-   are built, how you might be able to extend and add functionality to
-   these images as well as Getting Started guides.
-* Supported Instance Types
-** For Intel/AMD Architectures
-   All instance types Supported.
+   This is the Official CentOS 7 x86_64 HVM image that has been built
+   with a minimal profile, suitable for use in HVM instance types
+   only. The image contains just enough packages to run within AWS,
+   bring up an SSH Server and allow users to login. Please note that
+   this is the default CentOS-7 image that we recommend everyone
+   use. The image contains packages that are updated at points in time to
+   include critical security updates.
+** Highlights
+*** Highlight 1
+    CentOS Linux images are built with SELINUX set to
+    enforcing mode. The CentOS team tests the images with both Selinux
+    enabled as well as permissive.
+*** Highlight 2
+    With the release of CentOS-7.2111 cloud-init now includes support for
+    IMDSv2 in all CentOS AMI's. The default user is configured as
+    'centos'. Once the instance is running, you will
+    be able to login and use sudo for privileged commands.
+*** Highlight 3
+    For details, review the CentOS on AWS Cloud wiki page at
+    http://wiki.centos.org/Cloud/AWS for details on how these images
+    are built, how you might be able to extend and add functionality to
+    these images as well as Getting Started guides.
+*** Product Categories
+   | Category | Category Name              |
+   |----------+----------------------------|
+   |        1 | Operating System           |
+   |        2 | High Performance Computing |
+   |        3 | None                       |
+** Current Images by Region
+   #+begin_src shell :shebang #!/bin/zsh --login
+     aws ec2 describe-images --region us-east-1 --filters "Name=name,Values=CentOS-7-2111-20220319_1" --owners self
+   #+end_src
 
-   | Instance Family | Supports CentOS 7 | Min. Kernel Version | Min. Minor Release |
-   |-----------------+-------------------+---------------------+--------------------|
-   |                 |                   |                     |                    |
+   #+RESULTS:
 
+** Supported Instance Types
+**** For Intel/AMD Architectures
+    All instance types Supported.
+
+    | Instance Family | Supports CentOS 7 | Min. Kernel Version | Min. Minor Release |
+    |-----------------+-------------------+---------------------+--------------------|
+    |                 |                   |                     |                    |

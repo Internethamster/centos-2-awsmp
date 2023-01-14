@@ -1,21 +1,17 @@
 #!/bin/bash
-# CENTOS-Stream-8 BUILDER
+# CentOS-Stream-9 BUILDER
 
 # Set up a file that includes the content
 set -euo pipefail
 
 DRY_RUN="" # Dry run is handled on the command line with the "-d" command option
 
-REGION=us-east-1
-VERSION="FIXME"
-DATE=$(date +%Y%m%d)
-
 S3_BUCKET="aws-marketplace-upload-centos"
 S3_PREFIX="disk-images"
 DATE=$(date +%Y%m%d)
 release_name="CentOS-Cloud"
 release_short="CentOS-Cloud"
-release_version='8'
+release_version='9'
 MAJOR_RELEASE=$release_version
 NAME="CentOS-Stream-ec2"
 ARCH=$(arch)
@@ -23,19 +19,19 @@ ARCH=$(arch)
 if [[ "$ARCH" == "aarch64" ]]; then
     ARCHITECTURE="arm64"
     CPE_RELEASE=0
-    CPE_RELEASE_DATE=20220913
+    CPE_RELEASE_DATE=20221219
     CPE_RELEASE_REVISION=
-
-    QEMU_IMG="taskset -c 1 qemu-img"
-    VIRT_CUSTOMIZE="taskset -c 1 virt-customize"
-    VIRT_EDIT="taskset -c 1 virt-edit"
-    VIRT_SYSPREP="taskset -c 1 virt-sysprep"
+    ISOLATE="taskset -c 1"
+    QEMU_IMG="$ISOLATE qemu-img"
+    VIRT_CUSTOMIZE="$ISOLATE virt-customize"
+    VIRT_EDIT="$ISOLATE virt-edit"
+    VIRT_SYSPREP="$ISOLATE virt-sysprep"
 
     INSTANCE_TYPE="m6g.large"
 else
     ARCHITECTURE="$(arch)"
     CPE_RELEASE=0
-    CPE_RELEASE_DATE=20220913
+    CPE_RELEASE_DATE=20221219
     CPE_RELEASE_REVISION=
 
     QEMU_IMG="qemu-img"
@@ -54,13 +50,6 @@ then
     exit_abnormal
 fi
 
-FILE="${NAME}-${CENTOS_RELEASE}.${ARCH}"
-LINK="http://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${FILE}.qcow2"
-S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
-
-SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
-SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
-
 if [ ! -e ${NAME}-${DATE}.txt ]; then
     echo "0" > ${NAME}-${DATE}.txt
 fi
@@ -74,9 +63,10 @@ fi
 
 IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 err "IMAGE NAME: ${IMAGE_NAME}"
-FILE="${IMAGE_NAME}.qcow2"
+# Move from qcow2 to Raw images is importantm
+FILE="${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}"
 
-LINK=https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}.qcow2
+LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${FILE}"
 
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
 
@@ -86,32 +76,50 @@ SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
 
 IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 
-if [[ $(curl -Is ${LINK}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
-   then
-       err "$LINK to be retrieved and saved at ./${FILE}.xz"
-       curl -C - -o ${FILE}.xz ${LINK}.xz
-       FILE_STATE="COMPRESSED"
-elif [[ $(curl -Is ${LINK} | awk '/HTTP/ { print $2 }') == 200 ]]
-then
-       err "$LINK to be retrieved and saved at ./${FILE}"
-       curl -C - -o ${FILE} ${LINK}
-       FILE_STATE="NORMAL"
-else
-    err "$FILE was not located"
-    exit_abnormal
-fi
+# identify the file type in order of preference. It's possible that multiples exist,
+#   but Ideally we want compressed over uncompressed, then raw type over qcow2 and
+#   qcow2 over qcow... Anything else needs intervention
+FILE_FOUND="None"
+
+for FILE_TYPE in raw qcow2 qcow
+do
+
+    if [[ $(curl -Is ${LINK}.${FILE_TYPE}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
+    then
+        err "${LINK}.${FILE_TYPE}.xz to be retrieved and saved at ./${FILE}.${FILE_TYPE}.xz"
+        FILE=${FILE}.${FILE_TYPE}
+        FILE_STATE="COMPRESSED"
+        FILE_FOUND=${FILE_TYPE}
+        curl -C - -o ${FILE}.xz ${LINK}.${FILE_TYPE}.xz
+    elif [[ $(curl -Is ${LINK}.${FILE_TYPE} | awk '/HTTP/ { print $2 }') == 200 ]]
+    then
+        err "${LINK}.${FILE_TYPE} to be retrieved and saved at ./${FILE}.${FILE_TYPE}"
+        FILE_STATE="NORMAL"
+        FILE=${FILE}.${FILE_TYPE}
+        FILE_FOUND=$FILE_TYPE
+        curl -C - -o ${FILE} ${LINK}.${FILE_TYPE}
+    else
+        continue
+    fi
+    [[ "$FILE_FOUND" != "None" ]] && err "File type of $FILE_FOUND located."
+    [[ "$FILE_FOUND" != "None" ]] && break
+done
+[[ "$FILE_FOUND" == "None" ]] && err "ERROR: 404 File not found. Exiting!"
 
 if [[ "$FILE_STATE" == "COMPRESSED" ]]
    then
        err "xz -d ${FILE}.xz"
        xz -d --force ${FILE}.xz && FILE_STATE="NORMAL"
 fi
+err "${LINK}.${FILE_FOUND} retrieved and saved at $(pwd)/${FILE}"
 
-err "$LINK retrieved and saved at $(pwd)/${FILE}"
-
-${QEMU_IMG} convert ./${FILE} ${IMAGE_NAME}.raw && rm -f ${FILE}
-err "${IMAGE_NAME}.raw created"
-
+if [[ "$FILE_FOUND" != "raw" ]]
+then
+    ${QEMU_IMG} convert $(pwd)/${FILE} ${IMAGE_NAME}.raw && rm -f ${FILE}
+    err "${IMAGE_NAME}.raw created from ${FILE}"
+else
+    mv $(pwd)/${FILE} ${IMAGE_NAME}.raw
+fi
 ${VIRT_EDIT} -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
 
@@ -152,21 +160,14 @@ snapshotId=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks ${DRY_RU
 err "Created snapshot: $snapshotId"
 
 sleep 20
-IAD_snap=$(copySnapshotToRegion)
+IAD_snap=copySnapshotToRegion()
 err "Created $IAD_snap in us-east-1"
-while [[ "$(aws ec2 describe-snapshots --snapshot-ids $IAD_snap --region us-east-1 --query 'Snapshots[0].State' --output text)" != "completed" ]]
-do
-    set -x
-    err "snapshot copy to IAD is still active."
-    sleep 60
-done
-
 DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTermination\":true, \"SnapshotId\":\"${IAD_snap}\", \"VolumeSize\":10, \"VolumeType\":\"gp2\"}}]"
 
 err $DEVICE_MAPPINGS
 
-ImageId=$(aws ec2 --region $S3_REGION register-image --region $REGION --architecture=$ARCHITECTURE \
-              --description="${NAME}.${CENTOS_RELEASE} ($ARCH) for HVM Instances" \
+ImageId=$(aws ec2 --region us-east-1 register-image ${DRY_RUN} --architecture=${ARCHITECTURE} \
+              --description="${NAME}-${MAJOR_RELEASE} (${ARCHITECTURE}) for HVM Instances" \
               --virtualization-type hvm  \
               --root-device-name '/dev/sda1' \
               --name=${IMAGE_NAME} \
@@ -177,11 +178,11 @@ ImageId=$(aws ec2 --region $S3_REGION register-image --region $REGION --architec
 err "Produced Image ID $ImageId in us-east-1"
 echo "SNAPSHOT : ${IAD_snap}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MAJOR_RELEASE}.txt
 
-err "aws ec2 run-instances ${DRY_RUN} --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
-aws ec2 run-instances --region us-east-1 --subnet-id $SUBNET_ID \
+err "aws ec2 run-instances ${DRY_RUN} --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name \"davdunc@amazon.com\" --security-group-ids $SECURITY_GROUP_ID"
+aws ec2 run-instances ${DRY_RUN} --region us-east-1 --subnet-id $SUBNET_ID \
     --image-id $ImageId --instance-type ${INSTANCE_TYPE} --key-name "previous" \
-    --security-group-ids $SECURITY_GROUP_ID ${DRY_RUN}
+    --security-group-ids $SECURITY_GROUP_ID
 
 # Share AMI with AWS Marketplace
-err "${0%/*}/share-amis.sh $ImageId"
-${0%/*}/share-amis.sh $ImageId
+# err "./share-amis.sh $snapshotId $ImageId"
+# ./share-amis.sh $snapshotId $ImageId

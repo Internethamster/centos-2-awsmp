@@ -1,0 +1,41 @@
+---
+- name: Deploy a builder for CentOS images
+  hosts: localhost
+  connection: local
+  remote_user: builder
+
+  gather_facts: false
+
+  vars:
+    region: cn-northwest-1
+    profile: bjs
+    aws_instance_role: Tools-Instance
+    subnet: subnet-5a68b633
+    vpc_id: vpc-f9f02290
+    ec2_architecture: arm64
+    ec2_instance_type:
+      x86_64: c5d.metal
+      arm64: c6g.metal
+    image_id:
+      x86_64: ami-0167519b634ad8b03
+      arm64: ami-03f679efb23042ce6
+
+
+  tasks:
+    - name: Destroy instances for building images
+      community.aws.ec2_instance:
+        state: terminated
+        region: "{{ region }}"
+        profile: "{{ profile }}"
+        instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
+        tags:
+          task: image-builder
+
+    - name: Destroy instances for building images
+      community.aws.ec2_instance:
+        state: terminated
+        region: "{{ region }}"
+        profile: "{{ profile }}"
+        instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
+        tags:
+          task: image-downloader

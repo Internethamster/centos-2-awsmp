@@ -3,18 +3,35 @@
 \#*\#
 .*\#*
 ansible/roles/geerlingguy*
-<<<<<<< Updated upstream
-jenkins/pipelines-jobs/jenkins_jobs.ini
+jenkins/pipelines-jobs/
 .gitignore
 pyenv
-pyenv/*
-=======
->>>>>>> Stashed changes
 /ansible/ansible_collections/
 /fedora-list.tsv
 /fedora-us-east-1.json
 test.sh
 test1.sh
+<<<<<<< HEAD
 /std-build/*.raw
 */CentOS-Stream-ec2-*
 /.DS_Store
+=======
+/ansible/playbooks/test.yml
+/ansible/test_function.sh
+# This includes some details that aren't private, but aren't necessary to have in the world yet
+/src/config-details.py
+# Ignore my test ipython notebook
+/centos-2-awsmp/openpyxl-loadform-tester.ipynb 
+/centos-2-awsmp/product-export-*.xlsx
+/ansible/ansible_collections/
+/pyenv/
+/node_modules/
+/package-lock.json
+/package.json
+/ansible/inventory.json
+/ansible/inventory-cn.json
+/ansible/inventory-std.json
+/.DS_Store
+*~$*
+>>>>>>> development
+ansible/s3_image_sync/*

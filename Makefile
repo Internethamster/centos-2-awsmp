@@ -24,4 +24,4 @@ jenkins_build: ansible_build
 image_build: ansible_build
 	@ansible-playbook -e "input_admin_pass=$(JENKINS_PASSWORD)" ./build.yml
 
-all: pyenv ansible_build
+all: pyenv ansible_build # jenkins_build image_build

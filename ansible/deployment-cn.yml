@@ -1,0 +1,94 @@
+---
+- name: Deploy a builder for CentOS images in CN
+  hosts: localhost
+  connection: local
+
+  gather_facts: yes
+
+  vars:
+    region: cn-northwest-1
+    profile: bjs
+    aws_instance_role: Tools-Instance
+    security_group: default
+    subnet: subnet-5a68b633
+    vpc_id: vpc-f9f02290
+    ec2_architecture: arm64
+    ec2_instance_type:
+      x86_64: c5d.metal
+      arm64: c6g.metal
+    ec2_image_id:
+      x86_64: ami-04fd50ab26396a163  # RHEL 8.6 Hourly
+      arm64:  ami-0ce1543fea377076d  # RHEL 8.6 Hourly
+
+  tasks:
+    - name: Create a proper security group specific to the build images
+      amazon.aws.ec2_group:
+        name: centos-2-awsmp-sg
+        description: Builder Security Group for CORP access
+        profile: "{{ profile }}"
+        region: "{{ region }}"
+        vpc_id: "{{ vpc_id }}"
+        rules:
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 52.82.200.0/25
+
+    # This doesn't work yet
+    # - name: Find the CentOS Stream 9 Image in the Fedora account
+    #   amazon.aws.ec2_ami_info:
+    #     region: "{{ region }}"
+    #     profile: "{{ profile }}"
+    #     owners: 479567141204
+    #     filters:
+    #       architecture: "{{ ec2_architecture }}"
+    #       name: "CentOS Stream 8*"
+    #   register: centos_amis
+    #
+    # - name: Get the most recently published image
+    #   set_fact:
+    #     centos_ami: "{{ centos_amis.images | sort(attribute='creation_date') | last  }}"
+
+    - name: "Deploy an instance for building {{ ec2_architecture }} images."
+      community.aws.ec2_instance:
+        name: "Builder-{{ ec2_architecture }}"
+        region: "{{ region }}"
+        profile: "{{ profile }}"
+        instance_role: "{{ aws_instance_role }}"
+        vpc_subnet_id: "{{ subnet }}"
+        instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
+        security_group: default
+        volumes:
+          - device_name: /dev/sda1
+            ebs:
+              volume_size: 20
+              delete_on_termination: true
+        network:
+          assign_public_ip: true
+        image_id: "{{ ec2_image_id[ec2_architecture] }}"
+        user_data: "{{ lookup('file', 'files/builder-cn-instance-userdata.yml') }}"
+        tags:
+          task: image-builder
+          maintained_by: davdunc
+
+    - name: Build the EC2 instance
+      amazon.aws.ec2_instance:
+        name: "Downloader-{{ ec2_architecture }}"
+        profile: "{{ profile }}"
+        region: "{{ region }}"
+        instance_role: "{{ aws_instance_role }}"
+        image_id: "{{ ec2_image_id[ec2_architecture] }}"
+        tags:
+          task: image-downloader
+          maintained_by: davdunc
+        network:
+          assign_public_ip: true
+        vpc_subnet_id: "{{ subnet }}"
+        instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
+        security_group: "{{ security_group }}"
+        volumes:
+           - device_name: /dev/sda1
+             ebs:
+               volume_size: 60
+               delete_on_termination: true
+        user_data: "{{ lookup('file', '../files/builder-cn-instance-userdata.yml') }}"

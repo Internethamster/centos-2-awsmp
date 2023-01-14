@@ -2,9 +2,17 @@
 # CENTOS-8-STREAM BUILDER for CN
 set -euo pipefail
 
+source ${0%/*}/centos-stream-8-config.sh
+source ${0%/*}/shared_functions.sh
+# ${0%/*}/download-image.py
+
+DATE=$(date +%Y%m%d)
+
 MAJOR_RELEASE=8
 UPSTREAM_RELEASE="${MAJOR_RELEASE}-stream"
 NAME="CentOS-Stream-ec2-${MAJOR_RELEASE}"
+BASE_URI="https://cloud.centos.org/centos"
+# GenericImage="https://cloud.centos.org/centos/8-stream/aarch64/images/CentOS-Stream-ec2-8-20210603.0.aarch64.qcow2"
 
 ARCH="$(arch)"
 if [[ "$ARCH" == "aarch64" ]]
@@ -17,21 +25,25 @@ fi
 MINOR_RELEASE="20210603.0"
 VERSION=${1:-FIXME}
 
-DATE=$(date +%Y%m%d)
 REGION=cn-northwest-1
 SUBNET_ID=subnet-0890b142
 SECURITY_GROUP_ID=sg-5993f530
 DRY_RUN="--dry-run"
 
 UPSTREAM_FILE_NAME="${NAME}-${MINOR_RELEASE}.${ARCH}"
-BASE_URI="https://cloud.centos.org/centos"
 
-GenericImage="https://cloud.centos.org/centos/8-stream/aarch64/images/CentOS-Stream-ec2-8-20210603.0.aarch64.qcow2"
+if [[ -z $REGION ]]
+then
+    exit_abnormal
+fi
+
+if [[ ! -e ${NAME}-${DATE}.txt ]]
+then
+    echo "0" > ${NAME}-${DATE}.txt
+fi
+
 LINK="${BASE_URI}/${UPSTREAM_RELEASE}/$ARCH/images/${UPSTREAM_FILE_NAME}.qcow2"
 LINK2="${BASE_URI}/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${MINOR_RELEASE}.${ARCH}.qcow2"
-function err() {
-  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
-}
 
 if [ ! -e ${NAME}-${DATE}.txt ]; then
     echo "0" > ${NAME}-${DATE}.txt
@@ -78,10 +90,12 @@ if [[ "$ARCHITECTURE" == "arm64" ]]; then
     CMD="taskset -c 0 $CMD"
 fi
 $CMD -a ./${IMAGE_NAME}.raw --selinux-relabel
-err "virt-customize -a ./${IMAGE_NAME}.raw --selinux relabel" 
+err "virt-customize -a ./${IMAGE_NAME}.raw --selinux relabel"
 
 CMD=virt-sysprep
-if [[ "$ARCHITECTURE" == "arm64" ]]; then
+
+if [[ "$ARCHITECTURE" == "arm64" ]]
+then
     CMD="taskset -c 0 $CMD"
 fi
 $CMD -a ./${IMAGE_NAME}.raw
@@ -89,17 +103,18 @@ err "upgrading the current packages for the instance: ${IMAGE_NAME}"
 
 err "Cleaned up the volume in preparation for the AWS Marketplace"
 
-aws s3 cp ./${IMAGE_NAME}.raw  s3://davdunc-floppy/disk-images/
-err "Upload ${IMAGE_NAME}.raw image to S3://davdunc-floppy/disk-images/"
+aws s3 cp ./${IMAGE_NAME}.raw  s3://${S3_BUCKET}/${S3_PREFIX}/
+err "Upload ${IMAGE_NAME}.raw image to S3://${S3_BUCKET}/${S3_PREFIX}/"
 
-DISK_CONTAINER="Description=\'${IMAGE_NAME}\',Format=raw,UserBucket={S3Bucket=davdunc-floppy,S3Key=disk-images/${IMAGE_NAME}.raw}"
+DISK_CONTAINER="Description=\'${IMAGE_NAME}\',Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
+
 err DISK_CONTAINER="$DISK_CONTAINER"
 IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container "$DISK_CONTAINER")
 err "snapshot suceessfully imported to $IMPORT_SNAP"
 
 snapshotTask=$(echo $IMPORT_SNAP | jq -Mr '.ImportTaskId')
 
-while [[ "$(aws ec2 describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]] 
+while [[ "$(aws ec2 describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]]
 do
     aws ec2 describe-import-snapshot-tasks --import-task-ids $snapshotTask
     err "import snapshot is still active."
@@ -137,3 +152,5 @@ err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $I
 aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID \
     --image-id $ImageId --instance-type $INSTANCE_TYPE --key-name "previous" \
     --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && rm -f ./${IMAGE_NAME}.raw
+
+put_ssm_parameters

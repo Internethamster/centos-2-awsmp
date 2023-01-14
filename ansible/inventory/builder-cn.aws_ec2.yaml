@@ -1,12 +1,15 @@
 ---
 plugin: aws_ec2
-boto_profile: image-builder
+boto_profile: bjs
 regions:
-  - us-west-2
-  - us-east-2
-  - us-east-1
+  - cn-north-1
+  - cn-northwest-1
 filters:
-  "tag:task": image-builder
+  "tag:task":
+    - image-builder
+    - image-downloader
+    - awsmp-centos
+    - awsmp-fedora
 keyed_groups:
   # Add e.g. x86_64 hosts to an arch_x86_64 group
   - prefix: arch
@@ -32,6 +35,5 @@ keyed_groups:
     parent_group: "project"
 hostnames:
   - dns-name
-  - private-dns-name
   - network-interface.addresses.primary
-  - private-ip-address
+

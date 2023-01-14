@@ -1,10 +1,15 @@
 #!/bin/bash
-set -x -eu -o pipefail
+# CENTOS-8 BUILDER
+set -euo pipefail
+
+# CentOS-8-ec2-8.4.2105-20210603.0.aarch64.qcow2
 MAJOR_RELEASE="8"
 MINOR_RELEASE="5.2111"
-CPE_RELEASE_DATE="20210603" #https://cloud.centos.org/centos/8/aarch64/images/CentOS-8-ec2-8.4.2105-20210603.0.
-CPE_RELEASE_REVISION="0"
 RELEASE=${1:-0}
+CPE_RELEASE_DATE="20210603"
+CPE_RELEASE_REVISION="2"
+RELEASE=2111
+
 BUCKET_NAME=aws-marketplace-upload-centos
 OBJECT_KEY='disk-images/'
 DATE=$(date +%Y%m%d)
@@ -21,15 +26,11 @@ if [[ "$ARCH" == "aarch64" ]]; then
 else
     ARCHITECTURE="$(arch)"
 fi
-# CentOS-8-ec2-8.4.2105-20210603.0.aarch64.qcow2
-# GenericImage="http://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${NAME}-${CPE_RELEASE_DATE}.${CPE_RELEASE_REVISION}.${ARCH}.qcow2"
+GenericImage="http://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${NAME}-${CPE_RELEASE_DATE}.${CPE_RELEASE_REVISION}.${ARCH}.qcow2"
 LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}/${ARCH}/images/${IMAGE}.${ARCH}.qcow2"
-LINK="https://cloud.centos.org/centos/8/aarch64/images/CentOS-8-ec2-8.4.2105-20210603.0.aarch64.qcow2"
 
-
-function err() {
-  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
-}
+# Shared functions for the applications
+source ${0%/*}/shared_functions.sh
 
 RAW_DISK_NAME="${NAME}-${BUILD_DATE}.${RELEASE}.${ARCHITECTURE}"
 err "$RAW_DISK_NAME will be created from $LINK" 

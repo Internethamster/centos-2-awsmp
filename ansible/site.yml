@@ -3,7 +3,7 @@
 - name: set the centos image information
   ansible.builtin.import_playbook: playbooks/centos-image.yml
 
-- name: check image fax
+- name: check image facts
   hosts: localhost
   gather_facts: no
   connection: local

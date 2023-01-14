@@ -1,0 +1,163 @@
+---
+- name: System build configurations for building
+  hosts: tag_task_image_builder
+
+  remote_user: builder
+  gather_facts: true
+
+  collections:
+    - ansible.builtin
+    - community.general
+    - community.aws
+    - amazon.aws
+
+  tasks:
+    - name: Create Sandbox directory
+      ansible.builtin.file:
+        path: ${HOME}/sandbox
+        state: directory
+        mode: 0750
+
+    - name: fix the yum configuration to enable the swap
+      ansible.builtin.dnf:
+        name:
+          - "https://vault.centos.org/8.5.2111/extras/{{ ansible_architecture }}/os/Packages/centos-release-stream-8.1-1.1911.0.7.el8.{{ ansible_architecture }}.rpm"
+          - "https://vault.centos.org/8.5.2111/extras/{{ ansible_architecture }}/os/Packages/centos-stream-repos-8-3.el8.noarch.rpm"
+        state: present
+      become: true
+      when:
+        - ansible_distribution == "CentOS"
+        - ansible_distribution_release != "Stream"
+        - ansible_distribution_major_version == "8"
+
+
+    - name: Swap from Linux to Stream
+      ansible.builtin.command: "dnf swap centos-{linux,stream}-repos"
+      become: true
+      when:
+        - ansible_distribution == "CentOS"
+        - ansible_distribution_release != "Stream"
+        - ansible_distribution_major_version == "8"
+
+    - name: Ensure the epel release is enabled
+      ansible.builtin.yum:
+        name:
+          - epel-release
+      become: true
+      when:
+        - ansible_distribution == "CentOS"
+        - ansible_distribution_major_version == "7"
+
+    # - name: Install the entire git222 on C7
+    #   ansible.builtin.yum:
+    #     name:
+    #       - git222
+    #   become: true
+    #   when:
+    #     - ansible_distribution == "CentOS"
+    #     - ansible_distribution_major_version == "7"
+
+    - name: Install git-credential-libsecret on CS8
+      ansible.builtin.dnf:
+        name:
+          - git-credential-libsecret
+      become: true
+      when:
+        - ansible_distribution == "CentOS"
+        - ansible_distribution_major_version == "8"
+
+
+    - name: Ensure the packages are installed
+      ansible.builtin.yum:
+        name:
+          - jq
+          - wget
+          - git
+          - libguestfs-bash-completion
+          - rpm-build
+          - unzip
+          - libguestfs-tools-c
+          - emacs-nox # Include my editor of choice
+      become: true
+
+    - name: Configure the instance to store credentials in the case that they are needed
+      community.general.git_config:
+        name: credential.helper
+        scope: global
+        value: store
+
+    - name: Configure the user email for commit management to the ansible script variable
+      community.general.git_config:
+        name: user.email
+        scope: global
+        value: davdunc@amazon.com
+
+    - name: Configure the user name for commit management to the ansible script variable
+      community.general.git_config:
+        name: user.name
+        scope: global
+        value: David Duncan
+
+    - name: Synchronize the git repository from control machine to remote hosts
+      ansible.posix.synchronize:
+        src: "${HOME}/src/centos-2-awsmp"
+        dest: "{{ ansible_user_dir }}/sandbox/"
+
+    - name: determine if the git directory is already in place
+      ansible.builtin.stat:
+        path: "{{ ansible_user_dir }}/sandbox/centos-2-awsmp"
+      register: git_directory
+    - name: if the path exists then delete the git repository before cloning
+      ansible.builtin.file:
+        path: "{{ ansible_user_dir }}/sandbox/centos-2-awsmp"
+        state: absent
+      when: git_directory.stat.isdir is defined and git_directory.stat.isdir
+
+    - name: clone the centos-2-awsmp repository for use
+      ansible.builtin.git:
+        repo: https://github.com/Internethamster/centos-2-awsmp.git
+        dest: ${HOME}/sandbox/centos-2-awsmp
+        version: development
+
+    - name: Download the awscliv2
+      ansible.builtin.get_url:
+        url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip"
+        dest: "{{ ansible_user_dir }}/sandbox/"
+        mode: '0644'
+      register: awscliv2
+
+    - name: "Unzip the awscliv2 content to the host"
+      ansible.builtin.unarchive:
+        dest: "{{ ansible_user_dir }}/sandbox/"
+        remote_src: true
+        src: "${HOME}/sandbox/awscli-exe-linux-{{ ansible_architecture }}.zip"
+
+    - name: "Install the AWSCLIv2"
+      ansible.builtin.command: ./aws/install -i ${HOME}/lib/ -b ${HOME}/bin
+      args:
+        chdir: "{{ ansible_user_dir }}/sandbox"
+        creates: "{{ ansible_user_dir }}/bin/aws"
+
+    - name: Set the Server keepalive interval in the SSH config
+      ansible.builtin.blockinfile:
+        path: /etc/ssh/ssh_config
+        block: |
+          ServerInterval 120
+      become: true
+
+    - name: The SSH user for Ansible should not be allowed to login with password auth
+      ansible.builtin.blockinfile:
+        path: /etc/ssh/sshd_config
+        block: |
+          Match User builder
+          PasswordAuthentication no
+      become: true
+      notify: Restart sshd
+
+# ------- HANDLERS -------
+  handlers:
+    - name: Restart sshd
+      ansible.builtin.service:
+        name: sshd
+        state: restarted
+      become: true

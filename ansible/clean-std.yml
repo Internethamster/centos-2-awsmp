@@ -1,0 +1,29 @@
+---
+- name: Deploy a builder for CentOS images
+  hosts: tag_task_image_builder
+  remote_user: builder
+
+  gather_facts: no
+
+  vars:
+    region: us-west-2
+    profile: image-builder
+    iam_instance_profile: 2P-Lister
+    subnet: subnet-fba35eb1
+    ec2_architecture: arm64
+    ec2_instance_type:
+      x86_64: m6i.metal
+      arm64: m6g.metal
+    image_id: ami-006073918dcc6f406
+
+
+  tasks:
+    - name: Destroy instances for building images
+      community.aws.ec2_instance:
+        state: terminated
+        region: "{{ region }}"
+        profile: "{{ profile }}"
+        instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
+        tags:
+          task: image-builder
+      delegate_to: localhost

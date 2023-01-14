@@ -1,0 +1,63 @@
+---
+- name: Deploy a builder for CentOS images
+  hosts: localhost
+  connection: local
+
+  gather_facts: yes
+
+  vars:
+    region: us-west-2
+    profile: image-builder
+    aws_instance_role: image-builder-tools-instance
+    subnet: subnet-fba35eb1
+    ec2_architecture: arm64
+    ec2_instance_type:
+      x86_64: m6i.metal
+      arm64: m6g.metal
+    image_id: ami-006073918dcc6f406
+
+
+  tasks:
+    - name: Create a proper security group specific to the build images
+      debug:
+        msg: "TODO"
+
+    - name: Create a security group that matches the requirements
+      debug:
+        msg: "TODO"
+
+    - name: Find the CentOS Stream 9 Image in the Fedora account
+      amazon.aws.ec2_ami_info:
+        region: "{{ region }}"
+        profile: "{{ profile }}"
+        owners: 125523088429
+        filters:
+          architecture: "{{ ec2_architecture }}"
+          name: "CentOS Stream 8*"
+      register: centos_amis
+
+    - name: Get the most recently published image
+      set_fact:
+        centos_ami: "{{ centos_amis.images | sort(attribute='creation_date') | last  }}"
+
+    - name: Deploy an instance for building images
+      community.aws.ec2_instance:
+        name: "Builder-{{ ec2_architecture }}"
+        region: "{{ region }}"
+        profile: "{{ profile }}"
+        instance_role: "{{ aws_instance_role }}"
+        vpc_subnet_id: "{{ subnet }}"
+        instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
+        security_group: default
+        volumes:
+          - device_name: /dev/sda1
+            ebs:
+              volume_size: 20
+              delete_on_termination: true
+        network:
+          assign_public_ip: true
+        image_id: "{{ centos_ami.image_id }}"
+        user_data: "{{ lookup('file', 'files/builder-instance-userdata.yml') }}"
+        tags:
+          task: image-builder
+          maintained_by: davdunc
