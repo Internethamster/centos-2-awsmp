@@ -32,3 +32,4 @@ test1.sh
 /ansible/inventory-std.json
 /src/__pycache__/
 ansible/s3_image_sync/*
+*.patch
