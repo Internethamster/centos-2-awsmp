@@ -1,12 +1,36 @@
 #!/bin/bash
-## CENTOS-8-STREAM BUILDER for CN
+# CENTOS-8-STREAM BUILDER for CN
 set -euo pipefail
-
-DATE=$(date +%Y%m%d)
 
 source ${0%/*}/centos-stream-8-config.sh
 source ${0%/*}/shared_functions.sh
-${0%/*}/download-image.py
+# ${0%/*}/download-image.py
+
+DATE=$(date +%Y%m%d)
+
+MAJOR_RELEASE=8
+UPSTREAM_RELEASE="${MAJOR_RELEASE}-stream"
+NAME="CentOS-Stream-ec2-${MAJOR_RELEASE}"
+BASE_URI="https://cloud.centos.org/centos"
+# GenericImage="https://cloud.centos.org/centos/8-stream/aarch64/images/CentOS-Stream-ec2-8-20210603.0.aarch64.qcow2"
+
+ARCH="$(arch)"
+if [[ "$ARCH" == "aarch64" ]]
+then
+    ARCHITECTURE="arm64"
+else
+    ARCHITECTURE=$ARCH
+fi
+
+MINOR_RELEASE="20210603.0"
+VERSION=${1:-FIXME}
+
+REGION=cn-northwest-1
+SUBNET_ID=subnet-0890b142
+SECURITY_GROUP_ID=sg-5993f530
+DRY_RUN="--dry-run"
+
+UPSTREAM_FILE_NAME="${NAME}-${MINOR_RELEASE}.${ARCH}"
 
 if [[ -z $REGION ]]
 then
@@ -18,20 +42,8 @@ then
     echo "0" > ${NAME}-${DATE}.txt
 fi
 
-if [ "$VERSION" == "FIXME" ]; then
-    unset VERSION
-    echo $(( $(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt) + 1 )) > ${NAME}-${MAJOR_RELEASE}-${DATE}.txt
-    VERSION=$(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt)
-fi
-
-BASE_URI="https://cloud.centos.org/centos"
-
-GenericImage="https://cloud.centos.org/centos/8-stream/aarch64/images/CentOS-Stream-ec2-8-20210603.0.aarch64.qcow2"
 LINK="${BASE_URI}/${UPSTREAM_RELEASE}/$ARCH/images/${UPSTREAM_FILE_NAME}.qcow2"
 LINK2="${BASE_URI}/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${MINOR_RELEASE}.${ARCH}.qcow2"
-function err() {
-  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
-}
 
 if [ ! -e ${NAME}-${DATE}.txt ]; then
     echo "0" > ${NAME}-${DATE}.txt
@@ -54,7 +66,7 @@ if [[ "$ARCHITECTURE" == "arm64" ]]; then
 fi
 
 $CMD ./${UPSTREAM_FILE_NAME}.qcow2 ${IMAGE_NAME}.raw
-err "${IMAGE_NAME}.raw created"
+err "${IMAGE_NAME}.raw created" 
 
 CMD="virt-edit"
 if [[ "$ARCHITECTURE" == "arm64" ]]; then
@@ -82,8 +94,8 @@ err "virt-customize -a ./${IMAGE_NAME}.raw --selinux relabel"
 
 CMD=virt-sysprep
 
-if [[ "$ARCHITECTURE" == "arm64" ]]; then
-
+if [[ "$ARCHITECTURE" == "arm64" ]]
+then
     CMD="taskset -c 0 $CMD"
 fi
 $CMD -a ./${IMAGE_NAME}.raw
@@ -95,6 +107,7 @@ aws s3 cp ./${IMAGE_NAME}.raw  s3://${S3_BUCKET}/${S3_PREFIX}/
 err "Upload ${IMAGE_NAME}.raw image to S3://${S3_BUCKET}/${S3_PREFIX}/"
 
 DISK_CONTAINER="Description=\'${IMAGE_NAME}\',Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
+
 err DISK_CONTAINER="$DISK_CONTAINER"
 IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container "$DISK_CONTAINER")
 err "snapshot suceessfully imported to $IMPORT_SNAP"
@@ -110,7 +123,7 @@ done
 
 snapshotId=$(aws ec2 describe-import-snapshot-tasks --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
 
-err "Created snapshot: $snapshotId"
+err "Created snapshot: $snapshotId" 
 
 sleep 20
 
@@ -135,15 +148,9 @@ else
     INSTANCE_TYPE="c5n.large"
 fi
 
-
-
 err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name "davdunc@amazon.com" --security-group-ids $SECURITY_GROUP_ID"
 aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID \
     --image-id $ImageId --instance-type $INSTANCE_TYPE --key-name "previous" \
     --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && rm -f ./${IMAGE_NAME}.raw
 
-SSM_NAME=${DATE}-${VERSION}
-aws ssm put-parameter --name "/amis/centos/${ARCHITECTURE}/centos-stream-ec2-8/${SSM_NAME}"  \
-    --type "String" --value $ImageId --data-type "aws:ec2:image"
-aws ssm put-parameter --name "/amis/centos/${ARCHITECTURE}/centos-stream-ec2-8/latest"  \
-    --type "String" --value $ImageId --data-type "aws:ec2:image"
+put_ssm_parameters

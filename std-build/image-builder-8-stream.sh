@@ -6,6 +6,10 @@ set -euo pipefail
 
 DRY_RUN="" # Dry run is handled on the command line with the "-d" command option
 
+REGION=us-east-1
+VERSION="FIXME"
+DATE=$(date +%Y%m%d)
+
 S3_BUCKET="aws-marketplace-upload-centos"
 S3_PREFIX="disk-images"
 DATE=$(date +%Y%m%d)
@@ -49,6 +53,13 @@ if [[ -z $REGION ]]
 then
     exit_abnormal
 fi
+
+FILE="${NAME}-${CENTOS_RELEASE}.${ARCH}"
+LINK="http://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${FILE}.qcow2"
+S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
+
+SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
+SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
 
 if [ ! -e ${NAME}-${DATE}.txt ]; then
     echo "0" > ${NAME}-${DATE}.txt
@@ -154,8 +165,8 @@ DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTerminatio
 
 err $DEVICE_MAPPINGS
 
-ImageId=$(aws ec2 --region us-east-1 register-image ${DRY_RUN} --architecture=${ARCHITECTURE} \
-              --description="${NAME}-${MAJOR_RELEASE} (${ARCHITECTURE}) for HVM Instances" \
+ImageId=$(aws ec2 --region $S3_REGION register-image --region $REGION --architecture=$ARCHITECTURE \
+              --description="${NAME}.${CENTOS_RELEASE} ($ARCH) for HVM Instances" \
               --virtualization-type hvm  \
               --root-device-name '/dev/sda1' \
               --name=${IMAGE_NAME} \

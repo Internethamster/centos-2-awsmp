@@ -2,15 +2,19 @@
 *~
 \#*\#
 .*\#*
+*~$*
+.gitignore
+/.DS_Store
+*/CentOS-Stream-ec2-*
 ansible/roles/geerlingguy*
 jenkins/pipelines-jobs/
-.gitignore
 pyenv
 /ansible/ansible_collections/
 /fedora-list.tsv
 /fedora-us-east-1.json
 test.sh
 test1.sh
+/std-build/*.raw
 /ansible/playbooks/test.yml
 /ansible/test_function.sh
 # This includes some details that aren't private, but aren't necessary to have in the world yet
@@ -26,6 +30,5 @@ test1.sh
 /ansible/inventory.json
 /ansible/inventory-cn.json
 /ansible/inventory-std.json
-/.DS_Store
-*~$*
 /src/__pycache__/
+ansible/s3_image_sync/*

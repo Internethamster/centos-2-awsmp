@@ -1,0 +1,96 @@
+---
+- name: Download cloud images and register them in the local China account
+  hosts: tag_task_image_downloader
+
+  remote_user: builder
+  gather_facts: false
+
+  vars:
+    ec2_architecture: arm64
+    profile: bjs
+    image_link:
+      x86_64: >-
+        https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-ec2-8-20220125.1.x86_64.qcow2
+      arm64: >-
+        https://cloud.centos.org/centos/8-stream/aarch64/images/CentOS-Stream-ec2-8-20220125.1.aarch64.qcow2
+    image_name: "CentOS-Stream-ec2-8-20220125.1"
+    s3_bucket:
+      bjs: {bucket_name: centos-marketplace-images-aws, region: cn-northwest-1}  # LocationConstraint=cn-northwest-1
+      image-builder: {bucket_name: centos-marketplace-images-aws, region: us-west-2}
+
+  tasks:
+    - name: Building the images requires converting it to raw
+      dnf:
+        name: 
+          - qemu-img
+          - libguestfs-tools-c
+        state: latest
+      become: true
+    - name: Downloading the image requires redirection
+      dnf:
+        name: wget
+        state: latest
+      become: true
+
+    - name: Downloading the scripts requires git
+      dnf:
+        name: git
+        state: latest
+      become: true
+      
+    - name: Create the file path we use for the image sync
+      file:
+        path: /tmp/s3_image_sync
+        state: directory
+        mode: '0755'
+
+    - name: install the repository for management
+      git:
+        repo: "https://github.com/Internethamster/centos-2-awsmp.git"
+        dest: /tmp/centos-2-awsmp
+        clone: yes
+        update: yes
+        version: development
+
+    - name: Determine if the images are already downloaded
+      stat:
+        path: "/tmp/s3_image_sync/{{ image_name }}.x86_64.qcow2"
+      register: x86_64_qcow2_exists
+
+    - name: Determine if the images are already downloaded
+      stat:
+        path: "/tmp/s3_image_sync/{{ image_name }}.aarch64.qcow2"
+      register: aarch64_qcow2_exists
+
+    - name: Download the image for the x86_64 image
+      shell: "wget -O /tmp/s3_image_sync/{{ image_name }}.x86_64.qcow2 {{ image_link['x86_64'] }}"
+      when: x86_64_qcow2_exists is defined and not x86_64_qcow2_exists.stat.exists
+
+    - name: Download the image for the aarch64 image
+      shell: "wget -O /tmp/s3_image_sync/{{ image_name }}.aarch64.qcow2 {{ image_link['arm64'] }}"
+      when: aarch64_qcow2_exists is defined and not aarch64_qcow2_exists.stat.exists
+
+    - name: Update the images from qcow2 to raw images
+      shell: |
+        qemu-img convert -f qcow2 -O raw \
+        {{ image_name }}.{{ ec2_architecture }}.qcow2 {{ image_name }}.{{ ec2_architecture }}.img
+      args:
+        chdir: /tmp/s3_image_sync
+        creates: "{{ image_name }}.{{ ec2_architecture }}.img"
+
+    - name: Delete the qcow2 files from the sync directory
+      file:
+        path: "/tmp/s3_image_sync/{{ image_name }}.{{ ec2_architecture }}.qcow2"
+        state: absent
+
+    - name: "Upload raw image files to the s3 bucket {{ s3_bucket[profile][bucket_name] }}"
+      amazon.aws.aws_s3:
+        profile: bjs
+        region: cn-northwest-1
+        bucket: "{{ s3_bucket[profile][bucket_name] }}"
+        object: "disk-images/{{ image_name }}.{{ ec2_architecture }}.img"
+        src: "/tmp/s3_image_sync/{{ image_name }}.{{ ec2_architecture }}.img"
+        mode: put
+
+    # - name: Register the Raw Images to cn-northwest-1
+    #   amazon.aws.ec2_ami

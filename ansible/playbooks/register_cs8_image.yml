@@ -1,0 +1,93 @@
+---
+- name: Download cloud images and register them in the local account
+  hosts: localhost
+  connection: local
+
+  gather_facts: false
+
+  vars:
+    region: cn-northwest-1
+    profile: bjs
+    aws_instance_role: Tools-Instance
+    subnet: subnet-5a68b633
+    vpc_id: vpc-f9f02290
+    ec2_architecture: arm64
+    ec2_instance_type:
+      x86_64: c5d.metal
+      arm64: c6g.metal
+    image_link:
+      x86_64: "https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-ec2-8-20220125.1.x86_64.qcow2"
+      arm64:  "https://cloud.centos.org/centos/8-stream/aarch64/images/CentOS-Stream-ec2-8-20220125.1.aarch64.qcow2"
+    image_name: "CentOS-Stream-ec2-8-20220125.1"
+    s3_bucket:
+      bjs: centos-marketplace-images-aws  # LocationConstraint=cn-northwest-1
+      image-builder: centos-marketplace-images-aws
+  tasks:
+    - name: Determine if the images are already downloaded
+      stat:
+        path: s3_image_sync/{{ image_name }}.x86_64.qcow2"
+      register: x86_64_qcow2_exists
+
+    - name: Determine if the images are already downloaded
+      stat:
+        path: s3_image_sync/{{ image_name }}.aarch64.qcow2"
+      register: aarch64_qcow2_exists
+
+    - name: Download the image for the x86_64 image
+      get_url:
+        url: "{{ image_link['x86_64'] }}"
+        dest: "s3_image_sync/{{ image_name }}.x86_64.qcow2"
+        mode: "0644"
+      when: x86_64_qcow2_exists is not defined
+
+    - name: Download the image for the aarch64 image
+      get_url:
+        url: "{{ image_link['arm64'] }}"
+        dest: "s3_image_sync/{{ image_name }}.aarch64.qcow2"
+        mode: "0644"
+      when: aarch64_qcow2_exists is not defined
+      
+    - name: Update the images from qcow2 to raw images
+      shell: |
+        qemu-img convert -f qcow2 -O raw \
+        {{ image_name }}.{{ item }}.qcow2 {{ image_name }}.{{ item }}.img
+      args:
+        chdir: ../s3_image_sync
+        creates: "{{ image_name }}.{{ item }}.img"
+      with_items:
+        - x86_64
+        - aarch64
+    - name: Delete the qcow2 files from the sync directory
+      file:
+        path: "../s3_image_sync/{{ image_name }}.{{ item }}.qcow2"
+        state: absent
+      with_items:
+        - x86_64
+        - aarch64
+
+    - name: Upload raw image files to the s3 buckets
+      amazon.aws.aws_s3:
+        profile: bjs
+        region: cn-northwest-1
+        bucket: "{{ s3_bucket[profile] }}"
+        object: "disk-images/{{ image_name }}.{{ item }}.img"
+        src: "../s3_image_sync/{{ image_name }}.{{ item }}.img"
+        mode: put
+      with_items:
+        - x86_64
+        - aarch64
+        
+    - name: Upload raw image files to the s3 buckets
+      amazon.aws.aws_s3:
+        profile: image-builder
+        region: us-west-2
+        bucket: "{{ s3_bucket[profile] }}"
+        object: "disk-images/{{ image_name }}.{{ item }}.img"
+        src: "../s3_image_sync/{{ image_name }}.{{ item }}.img"
+        mode: put
+      with_items:
+        - x86_64
+        - aarch
+        
+    # - name: Register the Raw Images to cn-northwest-1
+    #   amazon.aws.ec2_ami

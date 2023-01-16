@@ -1,6 +1,6 @@
 .ONESHELL:
 SHELL:=/bin/bash
-.phony: pyenv ansible
+.phony: pyenv ansible_build jenkins_build
 	JENKINS_PASSWORD ?= "FileTheThingsThatIFile"
 
 pyenv:
@@ -24,4 +24,4 @@ jenkins_build: ansible_build
 image_build: ansible_build
 	@ansible-playbook -e "input_admin_pass=$(JENKINS_PASSWORD)" ./build.yml
 
-all: pyenv ansible
+all: pyenv ansible_build # jenkins_build image_build
