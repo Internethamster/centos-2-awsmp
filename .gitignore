@@ -28,3 +28,4 @@ test1.sh
 /ansible/inventory-std.json
 /.DS_Store
 *~$*
+/src/__pycache__/
