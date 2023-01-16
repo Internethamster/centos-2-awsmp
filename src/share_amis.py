@@ -52,7 +52,7 @@ class listing():
             LaunchPermission={
                 'Add': [ {'UserId': account } for account in accounts ]
             })
-        return response 
+        logging.info(f"{response}")
 
     def modify_snapshot_attribute(self, accounts: list):
         response = self.ec2_client.modify_snapshot_attribute(
@@ -61,7 +61,7 @@ class listing():
             CreateVolumePermission={
                 'Add': [ {'UserId': account } for account in accounts ]
             })
-        return response
+        logging.info(f"{response}")
 
 
     # def __str__(self):
