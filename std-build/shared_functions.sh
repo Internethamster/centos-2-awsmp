@@ -28,15 +28,24 @@ function get_s3_bucket_location () {
 get_default_vpc_subnet () {
     local REGION=${1:-$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document  | jq -r ".region")}
     local VPC_ID=$(aws ec2 describe-vpcs --region $REGION --query "Vpcs[?IsDefault].VpcId" --output text)
-    aws ec2 describe-subnets --region $REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[?MapPublicIpOnLaunch] | [0].SubnetId" --output text
-
+    aws ec2 describe-subnets --region $REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[?MapPublicIpOnLaunch] | [0].SubnetId" --output text --no-cli-pager
 }
 
+get_iad_vpc_subnet () {
+    local REGION = ${1:us-east-1}
+    local VPC_ID=$(aws ec2 describe-vpcs --region $REGION --no-cli-pager --query "Vpcs[?IsDefault].VpcId" --output text)
+}
 get_default_sg_for_vpc () {
     local REGION=${1:-$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document  | jq -r ".region")}
     local VPC_ID=$(aws ec2 describe-vpcs --region $REGION --query "Vpcs[?IsDefault].VpcId" --output text)
     aws ec2 describe-security-groups --region $REGION --filters "Name=vpc-id,Values=${VPC_ID}" --query 'SecurityGroups[?GroupName == `default`].GroupId' --output text
 }
+
+get_iad_sg_for_vpc () {
+    local REGION=${1:-us-east-1}
+    local VPC_ID=$(aws ec2 describe-vpcs --region $REGION --query "Vpcs[?IsDefault].VpcId" --output text)
+    aws ec2 describe-security-groups --region $REGION --filters "Name=vpc-id,Values=${VPC_ID}" --query 'SecurityGroups[?GroupName == `default`].GroupId' --output text
+    }
 
 while getopts ":f:v:b:k:a:n:r:R:dp" options; do
     case "${options}" in
