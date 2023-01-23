@@ -1,0 +1,47 @@
+site_name: centos-2-awsmp
+
+theme:
+  name: "material"
+  palette:
+    primary: ""
+    accent: "teal"
+  icon:
+    repo: fontawesome/brands/github
+
+repo_name: Internethamster/centos-2-awsmp
+repo_url: https://github.com/Internethamster/centos-2-awsmp
+edit_uri: ""
+
+nav:
+  - centos-2-awsmp: index.md
+  - Introduction: introduction.md
+  - Usage: usage.md
+  - Setting up development environment: development_env.md
+  - Contributing: contributing_to_centos-2-awsmp.md
+  - Contributing documentation: contributing_docs.md
+  - Extension development: extension_dev.md
+  - Centos-2-Awsmp advanced usage: centos-2-awsmp_advanced_usage.md
+  - Troubleshooting: troubleshooting.md
+  - Development for Windows: windows-contributing.md
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - markdown.extensions.codehilite:
+      guess_lang: false
+  - admonition
+  - codehilite
+  - extra
+  - pymdownx.snippets:
+      base_path: docs
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_div_format
+  - pymdownx.tabbed
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: "https://github.com/Internethamster/centos-2-awsmp"

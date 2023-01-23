@@ -1,0 +1,8 @@
+include LICENSE.txt
+include README.md
+include CHANGES.txt
+include requirements.txt
+include test_centos-2-awsmp.py
+exclude.*rc
+prune page_cache
+prune notebooks
