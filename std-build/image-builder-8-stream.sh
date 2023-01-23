@@ -5,6 +5,8 @@
 set -euo pipefail
 
 DRY_RUN="" # Dry run is handled on the command line with the "-d" command option
+# disable the cli pager
+export AWS_PAGER=""
 
 REGION=us-east-1
 VERSION="FIXME"
