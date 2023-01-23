@@ -31,3 +31,4 @@ venv
 /src/__pycache__/
 ansible/s3_image_sync/*
 /.DS_Store
+/centos-2-awsmp/file:cachedb?mode=memory&cache=shared
