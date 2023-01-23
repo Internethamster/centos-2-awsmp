@@ -1,0 +1,32 @@
+---
+- name: Deploy a group of Fedora Servers on Amazon
+  hosts: localhost
+  connection: local
+
+  vars:
+    ec2_instance_type:
+      x86_64: m5d.metal
+      arm64: m5gd.metal
+    region: us-east-1
+    aws_profile: bjs
+    instance_role:
+      RoleName: Tools-Instance
+      Arn: arn:aws:iam::425685993791:role/Tools-Instance
+    vpc_subnet_id: vpc-f9f02290
+      
+
+  tasks:
+    amazon.aws.ec2_instance:
+      name: "Test-Image-{{ ec2_architecture }}"
+      image:
+        id: "{{ fedora.image_id }}"
+      instance_role: "{{ instance_role['RoleName'] }}"
+      instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
+      network:
+        assign_public_ip: true
+      profile: "{{ aws_profile }}"
+      security_group: default
+      tags:
+        maintained_by: davdunc
+        task: image-builder
+      vpc_subnet_id: 
