@@ -32,3 +32,4 @@ venv
 ansible/s3_image_sync/*
 /.DS_Store
 /centos-2-awsmp/file:cachedb?mode=memory&cache=shared
+/centos-2-awsmp/AWSMP-CPE_Load_Form-2023-01-10.ods
