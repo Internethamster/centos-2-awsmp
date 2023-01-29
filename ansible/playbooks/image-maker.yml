@@ -100,24 +100,24 @@
 
     - name: Synchronize the git repository from control machine to remote hosts
       ansible.posix.synchronize:
-        src: "${HOME}/src/centos-2-awsmp"
-        dest: "{{ ansible_user_dir }}/sandbox/"
+        src: "../../../"
+        dest: "/{{ ansible_user_dir }}/sandbox/"
 
-    - name: determine if the git directory is already in place
-      ansible.builtin.stat:
-        path: "{{ ansible_user_dir }}/sandbox/centos-2-awsmp"
-      register: git_directory
-    - name: if the path exists then delete the git repository before cloning
-      ansible.builtin.file:
-        path: "{{ ansible_user_dir }}/sandbox/centos-2-awsmp"
-        state: absent
-      when: git_directory.stat.isdir is defined and git_directory.stat.isdir
+    # - name: determine if the git directory is already in place
+    #   ansible.builtin.stat:
+    #     path: "{{ ansible_user_dir }}/sandbox/centos-2-awsmp"
+    #   register: git_directory
+    # - name: if the path exists then delete the git repository before cloning
+    #   ansible.builtin.file:
+    #     path: "{{ ansible_user_dir }}/sandbox/centos-2-awsmp"
+    #     state: absent
+    #   when: git_directory.stat.isdir is defined and git_directory.stat.isdir
 
-    - name: clone the centos-2-awsmp repository for use
-      ansible.builtin.git:
-        repo: https://github.com/Internethamster/centos-2-awsmp.git
-        dest: ${HOME}/sandbox/centos-2-awsmp
-        version: main
+    # - name: clone the centos-2-awsmp repository for use
+    #   ansible.builtin.git:
+    #     repo: https://github.com/Internethamster/centos-2-awsmp.git
+    #     dest: ${HOME}/sandbox/centos-2-awsmp
+    #     version: main
 
     - name: Download the awscliv2
       ansible.builtin.get_url:
