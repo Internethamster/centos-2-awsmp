@@ -2,6 +2,9 @@
 - name: System build configurations for building
   hosts: tag_task_image_builder
 
+  vars_files:
+    - "vars/main-{{ partition }}.yml"
+
   remote_user: builder
   gather_facts: true
 

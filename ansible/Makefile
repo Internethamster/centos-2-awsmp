@@ -16,28 +16,28 @@ inventory:
 	$(ANSIBLE_INVENTORY) all -i $(INVENTORY_CN) --list > ./inventory-cn.json
 
 deployx86:
-	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=x86_64" ./deployment-std.yml -vvv
-	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "ec2_architecture=x86_64" ./deployment-cn.yml -vvv
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=x86_64 partition=std" ./deployment-std.yml -vvv
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "ec2_architecture=x86_64 partition=bjs" ./deployment-cn.yml -vvv
 
 deployarm:
-	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=arm64" ./deployment-std.yml -vvv
-	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "ec2_architecture=arm64 profile=bjs" ./deployment-cn.yml -vvv
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=arm64 partition=std" ./deployment-std.yml -vvv
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "ec2_architecture=arm64 partition=bjs" ./deployment-cn.yml -vvv
 
 
 deploy: deployx86 deployarm inventory
-	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "stage=$(STAGE)" ./playbooks/image-maker.yml
-	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "stage=$(STAGE)" ./playbooks/register_cs8_image.yml
-	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "stage=$(STAGE)" ./playbooks/image-maker.yml
-	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "stage=$(STAGE)" ./playbooks/register_cs8_image-cn.yml
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "stage=$(STAGE) partition=std" ./playbooks/image-maker.yml
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "stage=$(STAGE) partition=std" ./playbooks/register_cs8_image.yml
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "stage=$(STAGE) partition=bjs" ./playbooks/image-maker.yml
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "stage=$(STAGE) partition=bjs" ./playbooks/register_cs8_image-cn.yml
 
 cleanx86:
-	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=x86_64" ./clean-std.yml -vvv
-	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "ec2_architecture=x86_64" -e "profile=bjs" ./clean-cn.yml -vvv
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=x86_64 partition=std" ./clean-std.yml -vvv
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "ec2_architecture=x86_64 partition=bjs" ./clean-cn.yml -vvv
 
 
 cleanarm:
-	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=arm64" ./clean-std.yml -vvv
-	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "ec2_architecture=arm64" ./clean-cn.yml -vvv
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=arm64 partition=std" ./clean-std.yml -vvv
+	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY_CN) -e "ec2_architecture=arm64 partition=bjs" ./clean-cn.yml -vvv
 
 
 clean: cleanx86 cleanarm
