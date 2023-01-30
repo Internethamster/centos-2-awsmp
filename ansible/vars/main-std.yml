@@ -1,0 +1,3 @@
+region: us-west-2
+local_profile: image-builder
+remote_profile: default
