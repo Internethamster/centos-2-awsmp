@@ -27,3 +27,10 @@
         tags:
           task: image-builder
       delegate_to: localhost
+    - name: Remove the Security Stack
+      amazon.aws.cloudformation:
+        stack_name: "image_builder_sg"
+        state: absent
+        region: "{{ region }}"
+        profile: "{{ profile }}"
+        
