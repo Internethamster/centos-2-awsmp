@@ -32,4 +32,5 @@ keyed_groups:
     parent_group: "project"
 hostnames:
   - dns-name
-  - network-interface.addresses.primary
+compose:
+  ansible_host: public_dns_name
