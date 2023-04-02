@@ -4,7 +4,7 @@
 STAGE ?= development
 ANSIBLE_PLAYBOOK ?= ansible-playbook
 ANSIBLE_INVENTORY ?= ansible-inventory
-INVENTORY ?= inventory/builder.aws_ec2.yaml
+INVENTORY ?= inventory/builder-std.aws_ec2.yaml
 INVENTORY_CN ?= inventory/builder-cn.aws_ec2.yaml
 
 
@@ -12,8 +12,8 @@ INVENTORY_CN ?= inventory/builder-cn.aws_ec2.yaml
 .PHONY: inventory deploy clean
 
 inventory:
-	$(ANSIBLE_INVENTORY) all -i $(INVENTORY) --list > ./inventory-std.json
-	$(ANSIBLE_INVENTORY) all -i $(INVENTORY_CN) --list > ./inventory-cn.json
+	$(ANSIBLE_INVENTORY) all -i $(INVENTORY) --list --export > ./inventory-std.json
+	$(ANSIBLE_INVENTORY) all -i $(INVENTORY_CN) --list --export > ./inventory-cn.json
 
 deployx86:
 	$(ANSIBLE_PLAYBOOK) -i $(INVENTORY) -e "ec2_architecture=x86_64 partition=std" ./deployment-std.yml -vvv
