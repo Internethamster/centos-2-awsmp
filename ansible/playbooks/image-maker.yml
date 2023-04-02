@@ -100,7 +100,7 @@
 
     - name: Synchronize the git repository from control machine to remote hosts
       ansible.posix.synchronize:
-        src: "${HOME}/src/centos-2-awsmp"
+        src: "../../centos-2-awsmp"
         dest: "{{ ansible_user_dir }}/sandbox/"
 
     - name: determine if the git directory is already in place
