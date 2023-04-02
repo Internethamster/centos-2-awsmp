@@ -4,7 +4,7 @@
 STAGE ?= development
 ANSIBLE_PLAYBOOK ?= ansible-playbook
 ANSIBLE_INVENTORY ?= ansible-inventory
-INVENTORY ?= inventory/builder.aws_ec2.yaml
+INVENTORY ?= inventory/builder-std.aws_ec2.yaml
 INVENTORY_CN ?= inventory/builder-cn.aws_ec2.yaml
 
 
