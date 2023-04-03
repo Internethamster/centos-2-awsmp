@@ -13,9 +13,7 @@ S3_BUCKET="aws-marketplace-upload-centos"
 VERSION="FIXME"
 DATE=$(date +%Y%m%d)
 
-
-source ./shared_functions.sh
-
+source ${0%/*}/shared_functions.sh
 
 FILE="${NAME}-${ARCH}-GenericCloud-${RELEASE}.qcow2"
 LINK="http://cloud.centos.org/centos/7/images/${FILE}"
