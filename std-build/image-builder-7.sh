@@ -117,6 +117,8 @@ ImageId=$(aws ec2 register-image --region $S3_REGION --architecture=x86_64 \
 		      --name=${IMAGE_NAME} \
 		      --ena-support --sriov-net-support simple \
 		      --block-device-mappings "${DEVICE_MAPPINGS}" \
+                      --boot-mode uefi-preferred \
+                      --imds-support 'v2.0' \
 		      --output text)
 
 err "Produced Image ID $ImageId"

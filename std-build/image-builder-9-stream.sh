@@ -173,6 +173,8 @@ ImageId=$(aws ec2 --region us-east-1 register-image ${DRY_RUN} --architecture=${
               --name=${IMAGE_NAME} \
               --ena-support --sriov-net-support simple \
               --block-device-mappings "${DEVICE_MAPPINGS}" \
+              --boot-mode uefi-preferred \
+              --imds-support 'v2.0' \
               --output text)
 
 err "Produced Image ID $ImageId in us-east-1"
