@@ -1,4 +1,4 @@
-stage: devel
+stage: main
 aws:
   instance_role: jenkins-ec2-role
   instance_type: m5d.xlarge
