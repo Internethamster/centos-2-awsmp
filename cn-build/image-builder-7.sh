@@ -12,8 +12,8 @@ REGION=cn-northwest-1
 SUBNET_ID=subnet-0890b142
 SECURITY_GROUP_ID=sg-5993f530
 DRY_RUN="--dry-run"
-FILE="${NAME}-${ARCH}-GenericCloud-${RELEASE}.qcow2"
-LINK="http://cloud.centos.org/centos/7/images/${FILE}.xz"
+FILE="${NAME}-${ARCH}-GenericCloud-${RELEASE}"
+LINK="http://cloud.centos.org/centos/7/images/${FILE}.qcow2c"
 
 function err() {
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
@@ -33,12 +33,12 @@ err "$LINK to be retrieved and saved at $(pwd)/${FILE}.xz"
 curl -C - -o ${FILE}.xz ${LINK}
 
 
-err "xz -d ${FILE}.xz"
-xz -d --force ${FILE}.xz
+# err "xz -d ${FILE}.xz"
+# xz -d --force ${FILE}.xz
 
 err "${NAME}-${RELEASE}-${DATE}.$ARCH.raw created" 
 qemu-img convert \
-         ./${FILE} ${IMAGE_NAME}.raw && rm ${FILE}
+         ./${FILE}.qcow2c ${IMAGE_NAME}.raw && rm ${FILE}
 
 virt-edit ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
