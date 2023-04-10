@@ -35,3 +35,4 @@ ansible/s3_image_sync/*
 /centos-2-awsmp/AWSMP-CPE_Load_Form-2023-01-10.ods
 /ansible/.config/
 /ansible/files/groups_standard.yml
+*.DS_Store
