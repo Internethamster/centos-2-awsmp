@@ -99,6 +99,8 @@ err "aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $I
 aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5.large --key-name "previous" --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && \
     rm -f ./${IMAGE_NAME}.raw
 
+put_ssm_parameters ${NAME} # Create an ssm parameter for this as the latest image
+
 # Share AMI with AWS Marketplace
 # err "./share-amis.sh $snapshotId $ImageId"
 # ./share-amis.sh $snapshotId $ImageId
