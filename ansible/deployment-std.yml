@@ -15,7 +15,7 @@
     profile: image-builder
     aws_instance_role: image-builder-tools-instance
     subnet: subnet-fba35eb1
-    aws_vpc_id: vpc-12345678
+    aws_vpc_id: vpc-94b6f1ec
     ec2_architecture: arm64
     ec2_instance_type:
       x86_64: m6i.metal
