@@ -38,7 +38,7 @@ curl -C - -o ${FILE}.qcow2c ${LINK}
 
 err "${NAME}-${RELEASE}-${DATE}.$ARCH.raw created" 
 qemu-img convert \
-         ./${FILE}.qcow2c ${IMAGE_NAME}.raw && rm ${FILE}
+         ./${FILE}.qcow2c ${IMAGE_NAME}.raw && rm ${FILE}.qcow2c
 
 virt-edit ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
 err "Modified ./${IMAGE_NAME}.raw to make it permissive"
