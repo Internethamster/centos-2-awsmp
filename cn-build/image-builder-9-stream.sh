@@ -138,4 +138,4 @@ aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID \
     --image-id $ImageId --instance-type $INSTANCE_TYPE --key-name "previous" \
     --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && rm -f ./${IMAGE_NAME}.raw
 
-put_ssm_parameters
+put_ssm_parameters ${NAME}-${MAJOR_RELEASE}
