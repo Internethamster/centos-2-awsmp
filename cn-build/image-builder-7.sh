@@ -29,8 +29,8 @@ if [ "$VERSION" == "FIXME" ]; then
 fi
 IMAGE_NAME="${NAME}-${RELEASE}-${DATE}_${VERSION}.${ARCH}"
 
-err "$LINK to be retrieved and saved at $(pwd)/${FILE}.xz"
-curl -C - -o ${FILE}.xz ${LINK}
+err "$LINK to be retrieved and saved at $(pwd)/${FILE}.qcow2c"
+curl -C - -o ${FILE}.qcow2c ${LINK}
 
 
 # err "xz -d ${FILE}.xz"
