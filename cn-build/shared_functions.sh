@@ -3,8 +3,10 @@ function put_ssm_parameters() {
     err "saving ssm public parameter /amis/centos/${ARCHITECTURE}/${NAME}/${SSM_NAME}"
     err "saving ssm public parameter /amis/centos/${ARCHITECTURE}/${NAME}/latest" 
     aws ssm put-parameter --name "/amis/centos/${ARCHITECTURE}/${NAME,,}/${SSM_NAME}"  \
+        --overwrite --no-cli-pager \
         --type "String" --value $ImageId --data-type "aws:ec2:image"
     aws ssm put-parameter --name "/amis/centos/${ARCHITECTURE}/${NAME,,}/latest"  \
+        --overwrite --no-cli-pager \
         --type "String" --value $ImageId --data-type "aws:ec2:image"
 }
 
