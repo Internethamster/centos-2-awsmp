@@ -29,6 +29,7 @@ fi
 
 LINK="${BASE_URI}/${UPSTREAM_RELEASE}/$ARCH/images/${UPSTREAM_FILE_NAME}.qcow2"
 LINK2="${BASE_URI}/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${MAJOR_RELEASE}-${MINOR_RELEASE}.${ARCH}.qcow2"
+CHECKSUM_LINK="${BASE_URI}/${UPSTREAM_RELEASE}/${ARCH}/images/CHECKSUM"
 
 if [ ! -e ${NAME}-${MAJOR_RELEASE}-${DATE}.txt ]; then
     echo "0" > ${NAME}-${MAJOR_RELEASE}-${DATE}.txt
