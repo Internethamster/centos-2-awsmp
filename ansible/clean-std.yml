@@ -1,9 +1,9 @@
 ---
-- name: Deploy a builder for CentOS images
-  hosts: tag_task_image_builder
-  remote_user: builder
+- name: Destroy the builders for all images
+  hosts: localhost
+  connection: local
 
-  gather_facts: no
+  gather_facts: false
 
   vars:
     region: us-west-2
@@ -27,10 +27,17 @@
         tags:
           task: image-builder
       delegate_to: localhost
+    - name: Destroy instances for downloading images
+      community.aws.ec2_instance:
+        state: terminated
+        region: "{{ region }}"
+        profile: "{{ profile }}"
+        instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
+        tags:
+          task: image-downloader
     - name: Remove the Security Stack
       amazon.aws.cloudformation:
-        stack_name: "image_builder_sg"
+        stack_name: "imagebuildersg"
         state: absent
         region: "{{ region }}"
         profile: "{{ profile }}"
-        

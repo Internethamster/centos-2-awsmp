@@ -29,8 +29,8 @@
         timeout: 20
     - name: Use this address in the security group configuration
       ansible.builtin.template:
-        src: "./templates/groups_{{ partition }}.j2"
-        dest: "./files/groups_{{ partition }}.yml"
+        src: "groups_{{ partition }}.j2"
+        dest: "files/groups_{{ partition }}.yml"
     - name: "Define the groups_{{ partition}}.yml CFN"
       amazon.aws.cloudformation:
         stack_name: "imagebuildersg"
@@ -77,3 +77,26 @@
         tags:
           task: image-builder
           maintained_by: davdunc
+
+    - name: Deploy an instance for downloading all of the images
+      community.aws.ec2_instance:
+        name: "Downloader-{{ ec2_architecture }}"
+        region: "{{ region }}"
+        profile: "{{ profile }}"
+        instance_role: "{{ aws_instance_role }}"
+        vpc_subnet_id: "{{ subnet }}"
+        instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
+        security_group: "image-builder-{{ partition }}-base-sg"
+        volumes:
+          - device_name: /dev/sda1
+            ebs:
+              volume_size: 20
+              delete_on_termination: true
+        network:
+          assign_public_ip: true
+        image_id: "{{ centos_ami.image_id }}"
+        user_data: "{{ lookup('file', 'files/builder-instance-userdata.yml') }}"
+        tags:
+          task: image-downloader
+          maintained_by: davdunc
+      when: ec2_architecture == "x86_64"
