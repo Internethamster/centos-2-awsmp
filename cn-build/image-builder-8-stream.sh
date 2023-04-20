@@ -8,8 +8,6 @@ source ${0%/*}/shared_functions.sh
 
 DATE=$(date +%Y%m%d)
 
-MAJOR_RELEASE=8
-UPSTREAM_RELEASE="${MAJOR_RELEASE}-stream"
 NAME="CentOS-Stream-ec2-${MAJOR_RELEASE}"
 BASE_URI="https://cloud.centos.org/centos"
 # GenericImage="https://cloud.centos.org/centos/8-stream/aarch64/images/CentOS-Stream-ec2-8-20210603.0.aarch64.qcow2"
@@ -106,7 +104,7 @@ err "Cleaned up the volume in preparation for the AWS Marketplace"
 aws s3 cp ./${IMAGE_NAME}.raw  s3://${S3_BUCKET}/${S3_PREFIX}/
 err "Upload ${IMAGE_NAME}.raw image to S3://${S3_BUCKET}/${S3_PREFIX}/"
 
-DISK_CONTAINER="Description=\'${IMAGE_NAME}\',Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
+DISK_CONTAINER="Description='${IMAGE_NAME}',Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
 
 err DISK_CONTAINER="$DISK_CONTAINER"
 IMPORT_SNAP=$(aws ec2 import-snapshot --region $REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME ($ARCH) Image" --disk-container "$DISK_CONTAINER")
@@ -127,7 +125,7 @@ err "Created snapshot: $snapshotId"
 
 sleep 20
 
-DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTermination\":true, \"SnapshotId\":\"${snapshotId}\", \"VolumeSize\":10, \"VolumeType\":\"gp2\"}}]"
+DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTermination\":true, \"SnapshotId\":\"${snapshotId}\", \"VolumeSize\":10, \"VolumeType\":\"gp3\"}}]"
 
 err $DEVICE_MAPPINGS
 
@@ -153,4 +151,5 @@ aws ec2 run-instances --region $REGION --subnet-id $SUBNET_ID \
     --image-id $ImageId --instance-type $INSTANCE_TYPE --key-name "previous" \
     --security-group-ids $SECURITY_GROUP_ID $DRY_RUN && rm -f ./${IMAGE_NAME}.raw
 
-put_ssm_parameters
+put_ssm_parameters ${NAME}-${MAJOR_RELEASE}
+
