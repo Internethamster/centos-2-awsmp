@@ -6,7 +6,6 @@
   gather_facts: false
 
   vars:
-    ec2_architecture: arm64
     profile: bjs
     image_link:
       x86_64: >-
@@ -19,25 +18,19 @@
       image-builder: {bucket_name: centos-marketplace-images-aws, region: us-west-2}
 
   tasks:
-    - name: Building the images requires converting it to raw
+    - name: Building the images requires qemu and guestfish
       dnf:
-        name: 
+        name:
           - qemu-img
           - libguestfs-tools-c
         state: latest
       become: true
-    - name: Downloading the image requires redirection
-      dnf:
-        name: wget
-        state: latest
-      become: true
-
     - name: Downloading the scripts requires git
       dnf:
         name: git
         state: latest
       become: true
-      
+
     - name: Create the file path we use for the image sync
       file:
         path: /tmp/s3_image_sync
