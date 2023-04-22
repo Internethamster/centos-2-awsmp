@@ -1,0 +1,28 @@
+gHead:     add-security-group chore: ignore the opendocument format of the Load Form
+Merge:    origin/development chore: ignore the opendocument format of the Load Form
+Push:     origin/add-security-group does not exist
+
+Recent commits
+4236229 add-security-group origin/development chore: ignore the opendocument format of the Load Form
+97a52f1 Updated file for xlsx
+5db21a2 feat: add the CentOS Stream 9 Updated images to the list
+68907bd feat: start support for a new module to build the images
+53cf8eb add: create a machine_images.db file for image mgmt with sqlite
+a6ed3b1 fix: remove the delays that the cli-pager causes
+accd814 chore: remove cache.db file from files considered for vcs
+24c43ee build: update Makefile to use the build depending on partition
+3cddd32 test: include tests for a new python module
+e22c13e fix: don't include the virtual environment
+
+Pull requests (3)
+#8 refactor: move from the shell script to python for ami sharing
+#3 Update Master Branch after successful x86_64 builds
+#1 Jenkinsfile added for support of the Jenkins Build for CentOS8-Builder
+
+Issues (6)
+#9 Include Debian Images for cn-build
+#7 Download for CentOS images is renamed and should not be bug
+#6 Extend support to include Fedora Images
+#4 ./image-builder-8-stream.sh: line 156: MINOR_RELEASE: unbound variable
+#5 Add copy image script
+#2 Unable to update packages on the image. libguestfs is not finding the root volume
