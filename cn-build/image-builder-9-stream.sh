@@ -31,6 +31,7 @@ LINK="${BASE_URI}/${UPSTREAM_RELEASE}/$ARCH/images/${UPSTREAM_FILE_NAME}.qcow2"
 LINK2="${BASE_URI}/${MAJOR_RELEASE}-stream/${ARCH}/images/${NAME}-${MAJOR_RELEASE}-${MINOR_RELEASE}.${ARCH}.qcow2"
 CHECKSUM_LINK="${BASE_URI}/${UPSTREAM_RELEASE}/${ARCH}/images/CHECKSUM"
 
+
 if [ ! -e ${NAME}-${MAJOR_RELEASE}-${DATE}.txt ]; then
     echo "0" > ${NAME}-${MAJOR_RELEASE}-${DATE}.txt
 fi
@@ -43,8 +44,9 @@ fi
 IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
 
 curl -C - -o ${UPSTREAM_FILE_NAME}.qcow2 $LINK
-
+curl -O $CHECKSUM_LINK
 err "$LINK retrieved and saved at $(pwd)/${UPSTREAM_FILE_NAME}.qcow2"
+err "$CHECKSUM_LINK retrieved and saved at $(pwd)/CHECKSUM
 
 CMD="qemu-img convert"
 if [[ "$ARCHITECTURE" == "arm64" ]]; then
