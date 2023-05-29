@@ -2,8 +2,12 @@
 - name: Identify the community AMI for CentOS
   hosts: localhost
   connection: local
-  gather_facts: no
-
+  gather_facts: false
+  
+  collections:
+    - amazon.aws
+    - community.aws
+    - ansible.builtin
   vars:
     centos_version:
       Stream9: "CentOS Stream 9 {{ arch }}"
