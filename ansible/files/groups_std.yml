@@ -1,0 +1,37 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Builder for Security Groups to use in the access control for deployed image builders
+Mappings:
+  AMZNPrefixL:
+    us-east-1:
+      CORP: pl-60b85b09
+    us-west-2:
+      CORP: pl-f8a64391
+    us-west-1:
+      CORP: pl-a4a742cd
+Resources:
+  InternalPrefixList: # Allow access from Amazon CORP Networks
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: >-
+        std partition security group
+      GroupName: image-builder-std-base-sg
+      VpcId: vpc-94b6f1ec
+      Tags:
+        - Key: "maintained_by"
+          Value: davdunc
+      SecurityGroupIngress:
+        - CidrIp: 52.95.4.28/32
+          Description: Address from the local machine
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: tcp
+        - SourcePrefixListId: !FindInMap
+            - AMZNPrefixL
+            - !Ref 'AWS::Region'
+            - CORP
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: tcp
+          Description: Corporate Network access

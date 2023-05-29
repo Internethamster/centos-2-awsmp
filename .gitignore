@@ -37,3 +37,4 @@ ansible/s3_image_sync/*
 /ansible/files/groups_standard.yml
 *.DS_Store
 /group_vars/*.yml
+/Project.ede
