@@ -123,13 +123,31 @@
       args:
         chdir: "{{ ansible_user_dir }}/sandbox"
         creates: "{{ ansible_user_dir }}/bin/aws"
+    - name: Clone the centos-2-awsmp repository to the instances
+      ansible.builtin.git:
+        repo: "{{ github_url[partition] }}"
+        dest: "{{ ansible_user_dir }}/sandbox/centos-2-awsmp"
+        version: development
+        update: true
+        clone: true
+      when: partition != "bjs"
 
-    - name: Set the Server keepalive interval in the SSH config
-      ansible.builtin.blockinfile:
-        path: /etc/ssh/ssh_config
-        block: |
-          ServerInterval 120
-      become: true
+    - name: Clone the centos-2-awsmp repository to the instances in BJS
+      ansible.builtin.git:
+        repo: "https://{{ githubuser[partition] | urlencode }}:{{ githubpassword[partition] }}@{{ github_url[partition]"
+        dest: "{{ ansible_user_dir }}/sandbox/centos-2-awsmp"
+        version: development
+        update: true
+        clone: true
+      when: partition == "bjs"
+
+
+    # - name: Set the Server keepalive interval in the SSH config
+    #   ansible.builtin.blockinfile:
+    #     path: /etc/ssh/ssh_config
+    #     block: |
+    #       ServerInterval 120
+    #   become: true
 
     - name: The SSH user for Ansible should not be allowed to login with password auth
       ansible.builtin.blockinfile:
