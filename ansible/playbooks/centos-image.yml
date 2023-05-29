@@ -22,7 +22,7 @@
       Name: "CentOS 7.9.*"
       owner_id: "125523088429"
     arch: x86_64
-#     boto_profile: ansible
+    boto_profile: ansible
     aws_instance_role: jenkins-ec2-role 
     aws_instance_type: m5.large
     aws_region: us-east-2
