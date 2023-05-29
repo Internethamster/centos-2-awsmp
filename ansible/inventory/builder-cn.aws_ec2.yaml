@@ -10,6 +10,8 @@ filters:
     - image-downloader
     - awsmp-centos
     - awsmp-fedora
+    - awsmp-debian
+    - awsmp-freebsd
 keyed_groups:
   # Add e.g. x86_64 hosts to an arch_x86_64 group
   - prefix: arch
