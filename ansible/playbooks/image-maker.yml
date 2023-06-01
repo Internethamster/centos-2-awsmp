@@ -101,10 +101,6 @@
         scope: global
         value: David Duncan
 
-    - name: Synchronize the git repository from control machine to remote hosts
-      ansible.posix.synchronize:
-        src: "../../centos-2-awsmp"
-        dest: "{{ ansible_user_dir }}/sandbox/"
     - name: Download the awscliv2
       ansible.builtin.get_url:
         url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip"

@@ -38,3 +38,4 @@ ansible/s3_image_sync/*
 *.DS_Store
 /group_vars/*.yml
 /Project.ede
+/ansible/nohup.out
