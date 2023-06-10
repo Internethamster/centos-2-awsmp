@@ -1,0 +1,26 @@
+---
+- name: dynamodb table creation
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    partition: std
+    region: us-east-1
+    profile: image-builder
+
+  tasks:
+    - name: create dynamodb table for centos-2-awsmp information
+      community.aws.dynamodb_table:
+        name: centos-2-awsmp
+        profile: "{{ profile }}"
+        region: us-east-1
+        hash_key_name: compose_id
+        hash_key_type: STRING
+        range_key_name: create_time
+        range_key_type: NUMBER
+        read_capacity: 2
+        write_capacity: 2
+        tags:
+          maintained_by: davdunc
+          task: image-builder
