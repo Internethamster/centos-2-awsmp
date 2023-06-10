@@ -8,5 +8,4 @@ labels: bug
 
 #### What you expected to happen:
 
-#### Output with `--explain`
-
+#### What actually happened:
