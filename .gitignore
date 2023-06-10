@@ -39,3 +39,4 @@ ansible/s3_image_sync/*
 /group_vars/*.yml
 /Project.ede
 /ansible/nohup.out
+.vscode*
