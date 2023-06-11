@@ -19,10 +19,10 @@
       arm64: c6g.metal
     ec2_image_id:
       x86_64: ami-04fd50ab26396a163  # RHEL 8.6 Hourly
-      arm64:  ami-0ce1543fea377076d  # RHEL 8.6 Hourly
+      arm64: ami-0ce1543fea377076d  # RHEL 8.6 Hourly
 
   tasks:
-    - name: identify the current IP address from which this is being run
+    - name: Identify the current IP address from which this is being run
       community.general.ipify_facts:
         timeout: 20
     - name: Use this address in the security group configuration
@@ -57,6 +57,8 @@
         network:
           assign_public_ip: true
         image_id: "{{ ec2_image_id[ec2_architecture] }}"
+        metadata_options:
+          http_tokens: required
         user_data: "{{ lookup('file', 'files/builder-cn-instance-userdata.yml') }}"
         tags:
           task: image-builder
@@ -69,6 +71,8 @@
         region: "{{ region }}"
         instance_role: "{{ aws_instance_role }}"
         image_id: "{{ ec2_image_id[ec2_architecture] }}"
+        metadata_options:
+          http_tokens: required
         tags:
           task: image-downloader
           maintained_by: davdunc
@@ -76,11 +80,11 @@
           assign_public_ip: true
         vpc_subnet_id: "{{ subnet }}"
         instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
-        security_group: "image-builder-{{ partition }}-base-sg" 
+        security_group: "image-builder-{{ partition }}-base-sg"
         volumes:
-           - device_name: /dev/sda1
-             ebs:
-               volume_size: 60
-               delete_on_termination: true
+          - device_name: /dev/sda1
+            ebs:
+              volume_size: 60
+              delete_on_termination: true
         user_data: "{{ lookup('file', '../files/builder-cn-instance-userdata.yml') }}"
 

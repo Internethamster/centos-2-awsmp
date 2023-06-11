@@ -24,7 +24,7 @@
 
 
   tasks:
-    - name: identify the current IP address from which this is being run
+    - name: Identify the current IP address from which this is being run
       community.general.ipify_facts:
         timeout: 20
     - name: Use this address in the security group configuration
@@ -65,8 +65,6 @@
         vpc_subnet_id: "{{ subnet }}"
         instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
         security_group: "image-builder-{{ partition }}-base-sg"
-        metadata_options:
-          http_tokens: required
         volumes:
           - device_name: /dev/sda1
             ebs:
@@ -75,6 +73,8 @@
         network:
           assign_public_ip: true
         image_id: "{{ centos_ami.image_id }}"
+        metadata_options:
+          http_tokens: required
         user_data: "{{ lookup('file', 'files/builder-instance-userdata.yml') }}"
         tags:
           task: image-builder
@@ -97,6 +97,8 @@
         network:
           assign_public_ip: true
         image_id: "{{ centos_ami.image_id }}"
+        metadata_options:
+          http_tokens: required
         user_data: "{{ lookup('file', 'files/builder-instance-userdata.yml') }}"
         tags:
           task: image-downloader

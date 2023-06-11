@@ -1,10 +1,12 @@
 ansible
+ansible-lint
+ansible-navigator
 awscli
 boto3
 botocore
+fedora-messaging
 jenkins-job-builder
 python-jenkins
 PyYAML
 requests
 susepubliccloudinfo
-openpyxl
