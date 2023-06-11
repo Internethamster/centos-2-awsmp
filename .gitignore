@@ -40,3 +40,4 @@ ansible/s3_image_sync/*
 /Project.ede
 /ansible/nohup.out
 .vscode*
+cn-build/test.json
