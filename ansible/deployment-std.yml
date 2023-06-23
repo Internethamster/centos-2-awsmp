@@ -53,11 +53,11 @@
       register: centos_amis
 
     - name: Get the most recently published image
-      set_fact:
+      ansible.builtin.set_fact:
         centos_ami: "{{ centos_amis.images | sort(attribute='creation_date') | last  }}"
 
     - name: Deploy an instance for building images
-      community.aws.ec2_instance:
+      amazon.aws.ec2_instance:
         name: "Builder-{{ ec2_architecture }}"
         region: "{{ region }}"
         profile: "{{ profile }}"
@@ -81,7 +81,7 @@
           maintained_by: davdunc
 
     - name: Deploy an instance for downloading all of the images
-      community.aws.ec2_instance:
+      amazon.aws.ec2_instance:
         name: "Downloader-{{ ec2_architecture }}"
         region: "{{ region }}"
         profile: "{{ profile }}"
