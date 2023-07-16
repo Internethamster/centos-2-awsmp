@@ -13,7 +13,7 @@
 /ansible/inventory.json
 /ansible/playbooks/test.yml
 /ansible/test_function.sh
-/centos-2-awsmp/openpyxl-loadform-tester.ipynb 
+/centos-2-awsmp/openpyxl-loadform-tester.ipynb
 /centos-2-awsmp/product-export-*.xlsx
 /fedora-list.tsv
 /fedora-us-east-1.json
@@ -41,3 +41,4 @@ ansible/s3_image_sync/*
 /ansible/nohup.out
 .vscode*
 cn-build/test.json
+ansible/files/groups_*
