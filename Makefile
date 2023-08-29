@@ -8,11 +8,6 @@ pyenv:
 	@source pyenv/bin/activate
 	@pip3 install -r ./requirements-pip.txt
 
-pyenv:
-	@python3 -m venv pyenv
-	@source pyenv/bin/activate
-	@pip3 install -r ./requirements-pip.txt
-
 ansible_build:
 	@cd ansible
 	@ansible-galaxy collection install -r requirements.yml
