@@ -3,7 +3,7 @@
   hosts: tag_task_image_builder
   remote_user: builder
 
-  gather_facts: no
+  gather_facts: true
 
   vars:
     region: us-west-2
@@ -19,7 +19,7 @@
 
   tasks:
     - name: Destroy instances for building images
-      community.aws.ec2_instance:
+      amazon.aws.ec2_instance:
         state: terminated
         region: "{{ region }}"
         profile: "{{ profile }}"
@@ -33,4 +33,3 @@
         state: absent
         region: "{{ region }}"
         profile: "{{ profile }}"
-        
