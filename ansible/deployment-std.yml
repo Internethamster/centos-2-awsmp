@@ -5,10 +5,6 @@
 
   gather_facts: true
 
-  collections:
-    - community.general
-    - amazon.aws
-
   vars:
     partition: standard
     region: us-west-2
