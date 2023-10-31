@@ -3,7 +3,7 @@
   hosts: localhost
   connection: local
 
-  gather_facts: yes
+  gather_facts: true
 
   vars:
     region: cn-northwest-1
