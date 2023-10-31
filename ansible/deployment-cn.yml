@@ -18,11 +18,11 @@
       arm64: c6g.metal
     ec2_image_id:
       x86_64: ami-04fd50ab26396a163  # RHEL 8.6 Hourly
-      arm64:  ami-0ce1543fea377076d  # RHEL 8.6 Hourly
+      arm64: ami-0ce1543fea377076d  # RHEL 8.6 Hourly
 
   tasks:
     - name: Create a proper security group specific to the build images
-      amazon.aws.ec2_group:
+      amazon.aws.ec2_security_group:
         name: centos-2-awsmp-sg
         description: Builder Security Group for CORP access
         profile: "{{ profile }}"
@@ -49,8 +49,8 @@
     #   set_fact:
     #     centos_ami: "{{ centos_amis.images | sort(attribute='creation_date') | last  }}"
 
-    - name: "Deploy an instance for building {{ ec2_architecture }} images."
-      community.aws.ec2_instance:
+    - name: "Deploy an instance for building images for {{ ec2_architecture }}."
+      amazon.aws.ec2_instance:
         name: "Builder-{{ ec2_architecture }}"
         region: "{{ region }}"
         profile: "{{ profile }}"
@@ -87,8 +87,8 @@
         instance_type: "{{ ec2_instance_type[ec2_architecture] }}"
         security_group: "{{ security_group }}"
         volumes:
-           - device_name: /dev/sda1
-             ebs:
-               volume_size: 60
-               delete_on_termination: true
+          - device_name: /dev/sda1
+            ebs:
+              volume_size: 60
+              delete_on_termination: true
         user_data: "{{ lookup('file', '../files/builder-cn-instance-userdata.yml') }}"
