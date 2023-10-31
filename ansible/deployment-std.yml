@@ -3,7 +3,7 @@
   hosts: localhost
   connection: local
 
-  gather_facts: yes
+  gather_facts: true
 
   collections:
     - community.general
@@ -24,13 +24,14 @@
 
 
   tasks:
-    - name: identify the current IP address from which this is being run
+    - name: Identify the current IP address from which this is being run
       community.general.ipify_facts:
         timeout: 20
     - name: Use this address in the security group configuration
       ansible.builtin.template:
         src: "./templates/groups_{{ partition }}.j2"
         dest: "./files/groups_{{ partition }}.yml"
+        mode: rwx
     - name: "Define the groups_{{ partition}}.yml CFN"
       amazon.aws.cloudformation:
         stack_name: "imagebuildersg"
@@ -53,11 +54,11 @@
       register: centos_amis
 
     - name: Get the most recently published image
-      set_fact:
-        centos_ami: "{{ centos_amis.images | sort(attribute='creation_date') | last  }}"
+      ansible.builtin.set_fact:
+        centos_ami: "{{ centos_amis.images | sort(attribute='creation_date') | last }}"
 
     - name: Deploy an instance for building images
-      community.aws.ec2_instance:
+      amazon.aws.ec2_instance:
         name: "Builder-{{ ec2_architecture }}"
         region: "{{ region }}"
         profile: "{{ profile }}"
