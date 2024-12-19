@@ -19,3 +19,4 @@
   197  virt-install --name=centos-8-stream-ec2-8-$(date +%Y%m%d)-$(arch) --memory 4096 --vcpus 4 --disk size=8 --location=http://mirror.vcu.edu/pub/gnu_linux/centos/8-stream/BaseOS/x86_64/os/ --os-variant centos-stream8 --initrd-inject ./ks.cfg --extra-args="ks=file:/ks.cfg console=tty0 console=ttyS0,9600n8" --dry-run
   198  virt-install --name=centos-8-stream-ec2-8-$(date +%Y%m%d)-$(arch) --memory 4096 --vcpus 4 --disk size=8 --location=http://mirror.vcu.edu/pub/gnu_linux/centos/8-stream/BaseOS/x86_64/os/ --os-variant centos-stream8 --initrd-inject ./ks.cfg --extra-args="ks=file:/ks.cfg console=tty0 console=ttyS0,9600n8" &
   296  history | grep virt-install 
+
