@@ -1,6 +1,7 @@
+# ./create_db.py
 #use a toml config file to import values stored in the APPCONFIG dictionary object
-import toml
 from __future__ import print_function # Python 2/3 compatibility
+import toml
 import boto3
 from botocore.client import Config
 
