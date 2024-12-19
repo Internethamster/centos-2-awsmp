@@ -4,8 +4,10 @@ from __future__ import print_function # Python 2/3 compatibility
 import toml
 import boto3
 from botocore.client import Config
-
-APPCONFIG = toml.load('/home/davdunc/.centos_build_config.toml')
+try:
+    APPCONFIG = toml.load('~/.centos_build_config.toml')
+except:
+    APPCONFIG = toml.load('~/.config/centos_build_config.toml')
 
 my_config = Config(
     signature_version = 'v4',
