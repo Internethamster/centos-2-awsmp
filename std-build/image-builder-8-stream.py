@@ -23,7 +23,7 @@ release_name = config['centos']['release_name']
 release_short = config['centos']['release_short']
 release_version = config['centos']['release_version']
 file_name = config['centos']['name']
-
+product_id = config['marketplace']['product_id']
 architecture = platform.machine()
 amzn_architecture = architecture
 if architecture == 'aarch64':
@@ -32,7 +32,7 @@ if architecture == 'aarch64':
 #todo: create a cli structure so that we can override the release version
 #TODO: Build the base_url
 base_url = f'https://cloud.centos.org/centos/{release_version}-stream/{amzn_architecture}/images/{file_name}-{release_version}-latest.{architecture}.raw.xz'
-
+def download_file(file_location: str)-> str:
 def run(release_version):
     """
     This function is the main entry point for the script.
