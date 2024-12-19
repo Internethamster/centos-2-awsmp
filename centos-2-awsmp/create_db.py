@@ -18,8 +18,6 @@ my_config = Config(
 my_dynamodb = boto3.resource('dynamodb', config=my_config)
 # the table definition should include the table name, the primary key of the AWS Marketplace listing product id, the AMI ID in us-east-1 , the last updated date, but does not require provisioned throughput
 
-
-dynamodb = boto3.resource('dynamodb', region_name='us-west-2')
 table = dynamodb.create_table(
     TableName='centosinawsmp',
     KeySchema=[
