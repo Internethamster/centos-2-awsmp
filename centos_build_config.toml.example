@@ -11,5 +11,5 @@ name = 'CentOS-Stream-ec2'
 
 [marketplace]
 s3_bucket = "aws-marketplace-upload-centos"
-s3_prefix  = "disk-images"
-productId="a5911e94-1971-4697-9bc5-02904340f1df"
+s3_bucket_prefix  = "disk-images"
+productId = "a5911e94-1971-4697-9bc5-02904340f1df"
