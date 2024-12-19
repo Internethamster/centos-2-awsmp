@@ -1,5 +1,5 @@
-#!/bin/bash
-
+#!/bin/false
+## CentOS6 is deprecated. This is a placeholder, but no longer functional
 # CENTOS-6 BUILDER
 set -euo pipefail
 
