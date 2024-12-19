@@ -79,7 +79,7 @@ def run(release_version):
         DiskContainer={
             'Description': f'CentOS {release_version} Stream {amzn_architecture} based on Amazon Linux 2',
             'Format': 'raw',
-            'Url': f'XXXXXXXXXX.{REGION}.amazonaws.com/{S3_BUCKET}/{S3_BUCKET_PREFIX}/{file_name}-{release_version}-latest.{architecture}.raw',
+            'Url': f's3://{S3_BUCKET}/{S3_BUCKET_PREFIX}/{file_name}-{release_version}-{s3_upload_date}.{architecture}.raw',
             'UserBucket': {
                 'S3Bucket': S3_BUCKET,
                 'S3Key': f'{S3_BUCKET_PREFIX}/{file_name}-{release_version}-{s3_upload_date}.{architecture}.raw'
