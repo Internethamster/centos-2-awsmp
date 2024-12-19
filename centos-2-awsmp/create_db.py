@@ -5,7 +5,7 @@ import toml
 import boto3
 from botocore.client import Config
 
-APPCONFIG = toml.load("~/.centos_build_config.toml")
+APPCONFIG = toml.load('/home/davdunc/.centos_build_config.toml')
 
 my_config = Config(
     signature_version = 'v4',
@@ -17,6 +17,7 @@ my_config = Config(
 # create a dynamodb resource using the config
 my_dynamodb = boto3.resource('dynamodb', config=my_config)
 # the table definition should include the table name, the primary key of the AWS Marketplace listing product id, the AMI ID in us-east-1 , the last updated date, but does not require provisioned throughput
+
 
 dynamodb = boto3.resource('dynamodb', region_name='us-west-2')
 table = dynamodb.create_table(
@@ -31,8 +32,13 @@ table = dynamodb.create_table(
         {
             'AttributeName': 'centosid',
             'AttributeType': 'S'
-        }
+        },
+ 
     ],
+    ProvisionedThroughput={
+        'ReadCapacityUnits': 10,
+        'WriteCapacityUnits': 10
+    },
 )
 
 print("Table status:", table.table_status)
