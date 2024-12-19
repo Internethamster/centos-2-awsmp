@@ -5,10 +5,13 @@ from botocore.config import Config
 import platform
 import time
 
+#TODO: set the home directory for the user
+home_dir = os.path.expanduser('~')
+
 try:
-    config = toml.load(open('~/.centos_build_config.toml'))
+    config = toml.load(open(f"{home_dir}/.centos_build_config.toml"))
 except FileNotFoundError:
-    config = toml.load(open('~/.config/centos_build_config.toml'))
+    config = toml.load(open(f"{home_dir}/.config/centos_build_config.toml"))
 finally:
     print("Error: could not load config file")
 
