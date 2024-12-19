@@ -4,7 +4,7 @@ profile = "default"
 
 [centos]
 release_name = "CentOS-Cloud"
-release_short = "CentOS-Cloud
+release_short = "CentOS-Cloud"
 release_version = '8'
 major_release = '8'
 name = 'CentOS-Stream-ec2'
