@@ -3,6 +3,10 @@ SHELL:=/bin/bash
 .phony: pyenv ansible_build jenkins_build std_build
 	JENKINS_PASSWORD ?= "FileTheThingsThatIFile"
 
+
+setup:
+	@chmod +x centos-2-awsmp/create_db.py
+	@centos-2-awsmp/create_db.py
 pyenv:
 	@python3 -m venv pyenv
 	@source pyenv/bin/activate

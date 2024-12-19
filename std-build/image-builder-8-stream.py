@@ -8,6 +8,7 @@ import time
 try:
     config = toml.load(open('~/.centos_build_config.toml'))
 except FileNotFoundError:
+    config = toml.load(open('~/.config/centos_build_config.toml'))
 finally:
     print("Error: could not load config file")
 
