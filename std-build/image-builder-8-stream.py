@@ -165,11 +165,12 @@ def run(release_version: str, config_file=config_file):
 
 
 
-@click.command()
-@click.option('--release_version', default='latest', help='Specify the release version of CentOS Stream')
-@click.option('--config_file', default='~/.config/centos_build_config.toml', help='Specify the path to the config file')
 def cli(release_version: str, config_file: str) -> None:
     run(release_version, config_file)
 
 if __name__ == '__main__':
-    cli()
+    @click.command()
+    @click.option('--release_version', default='latest', help='Specify the release version of CentOS Stream')
+    @click.option('--config_file', default='~/.config/centos_build_config.toml', help='Specify the path to the config file')
+    
+    cli(release_version, config_file)
