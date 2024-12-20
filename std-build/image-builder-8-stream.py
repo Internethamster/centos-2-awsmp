@@ -172,5 +172,6 @@ if __name__ == '__main__':
     @click.command()
     @click.option('--release_version', default='latest', help='Specify the release version of CentOS Stream')
     @click.option('--config_file', default='~/.config/centos_build_config.toml', help='Specify the path to the config file')
-    
+    print(f'Running with release version: {release_version}')
+    print(f'Running with config file: {config_file}')
     cli(release_version, config_file)
