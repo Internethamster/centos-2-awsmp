@@ -22,11 +22,13 @@ docstring = """
 @click.option('--release-version', default=None, help='Release Version of CentOS Stream')
 @click.option('--revision', default='0', help='incremented when building additional images on the same build date')
 @click.option('--config-file', default=f'{os.environ["HOME"]}/.config/centos_build_config.toml', help='Path to the config file')
-
-base_url = 'https://cloud.centos.org/centos/{release_version}-stream/{architecture}/images/{file_name}-{release_version}-latest.{architecture}.raw.xz'
     
+def build_download_url(release_version: str = release_version, architecture: str = architecture, file_name: str = file_name )
+    return f'https://cloud.centos.org/centos/{release_version}-stream/{architecture}/images/{file_name}-{release_version}-latest.{architecture}.raw.xz'
+
+
 #Create a function that uses python libraries to download and save the cloud image using the url defined in the config file
-def download_file(url):
+def download_file(url: str) -> str:
    local_filename = url.split('/')[-1]
    # NOTE the stream=True parameter below
    with requests.get(url, stream=True) as r:
@@ -37,6 +39,7 @@ def download_file(url):
                # and set chunk_size parameter to None.
                #if chunk: 
                f.write(chunk)
+    return local_filename
 
 def load_config(config_file):
        # If the config_file is located, then we will use it, otherwise we will use the default config file
@@ -234,8 +237,8 @@ def build_ami(release_version, config_file):
         # The platform architecture is always arm64, but the instance os will identify as aarch64
         amzn_architecture = 'arm64'
     # Configure the base_url using the content from the config and the command line. 
-    
-    download_file(base_url.format(release_version=release_version, architecture=architecture, file_name=file_name))
+    base_url = build_download_url(release_version=release_version, architecture=architecture, file_name=file_name)
+    downloaded_file = download_file(base_url)
     # Uncompress the file if the file is compressed
     if os.path.exists(f'{file_name}-{release_version}-latest.{architecture}.raw.xz'):
         os.system(f'unxz {file_name}-{release_version}-latest.{architecture}.raw.xz')
