@@ -2,7 +2,6 @@ import os
 import requests
 from botocore.config import Config
 
-
 #Create a function that uses python libraries to download and save the cloud image using the url defined in the config file
 def download_file(url: str) -> str:
    local_filename = url.split('/')[-1]
