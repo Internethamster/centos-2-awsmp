@@ -3,7 +3,7 @@ import toml
 import click
 import time
 import urllib.request
-import sslimport
+import ssl
 import click 
 import boto3
 from botocore.config import Config
@@ -30,6 +30,7 @@ except FileNotFoundError:
     config = load_config(f'{home_dir}/.config/centos_build_config.toml')
 finally:
     print("Error: could not load config file")
+    exit(1) 
 
 REGION = config['app']['region']
 PROFILE = config['app']['profile']
