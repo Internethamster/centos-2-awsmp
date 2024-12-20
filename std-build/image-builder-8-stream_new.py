@@ -23,9 +23,11 @@ docstring = """
 @click.option('--revision', default='0', help='incremented when building additional images on the same build date')
 @click.option('--config-file', default=f'{os.environ["HOME"]}/.config/centos_build_config.toml', help='Path to the config file')
     
-def build_download_url(release_version: str = release_version, architecture: str = architecture, file_name: str = file_name ):
+def build_download_url(release_version: str, architecture: str, file_name: str) -> str:
     return f'https://cloud.centos.org/centos/{release_version}-stream/{architecture}/images/{file_name}-{release_version}-latest.{architecture}.raw.xz'
 
+def build_ami_name(release_version: str, architecture: str, file_name: str) -> str:
+    return f'{file_name}-{release_version}-{build_date}.{architecture}'
 
 #Create a function that uses python libraries to download and save the cloud image using the url defined in the config file
 def download_file(url: str) -> str:
