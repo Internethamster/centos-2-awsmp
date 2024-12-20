@@ -10,12 +10,13 @@ import requests
 import boto3
 from botocore.config import Config
 import time
- """
+
+docstring = """
     This python script is used to build an AMI from the CentOS Stream images found at
     https://cloud.centos.org/centos/{release_version}-stream/{amzn_architecture}/images/{file_name}-{release_version}-latest.{architecture}.raw.xz' where
     the architecture can be x86_64 or aarch64 depending on the platform we are running the script on. The Release Version is defined in a configuration file or on the command line
     the config file is found by default in the home directory of the user at /home/<username>/.config/centos_build_image.toml
-    """
+"""
 
 @click.command()
 @click.option('--release-version', default=None, help='Release Version of CentOS Stream')
