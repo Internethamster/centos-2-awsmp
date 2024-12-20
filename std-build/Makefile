@@ -20,6 +20,6 @@ $(BUILDDIR)/%/:
 
 .PHONY: build
 build:
-	- mkdir datadir
-	image-builder-8.sh -v $(VERSION)
+	@/usr/bin/env python3 image-builder-8-stream.py -v $(VERSION)
+
 
