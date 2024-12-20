@@ -40,7 +40,7 @@ def download_file(file_location: str)-> str:
     file_name = file_location.split('/')[-1]
     urllib.request.urlretrieve(file_location, file_name)
     return file_name
-def run(release_version: str, config_file=config_file):
+def run(release_version: str, config_file: str):
     """
     This function is the main entry point for the script.
     It takes a release version as input and performs the following tasks:
