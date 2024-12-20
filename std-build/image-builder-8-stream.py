@@ -21,34 +21,12 @@ def load_config(config_file: str) -> dict:
     return app_config
 
 home_dir = os.path.expanduser('~') # need this for the conditional statements below. 
-
-if config_file != f'{home_dir}/.config/centos_build_config.toml':
-    config = load_config(config_file)
-try:
-    config = load_config(f'{home_dir}/.centos_build_config.toml')
-except FileNotFoundError:
-    config = load_config(f'{home_dir}/.config/centos_build_config.toml')
-finally:
-    print("Error: could not load config file")
-    exit(1) 
-
-REGION = config['app']['region']
-PROFILE = config['app']['profile']
-S3_BUCKET = config['marketplace']['s3_bucket']
-S3_BUCKET_PREFIX = config['marketplace']['s3_bucket_prefix']
-release_name = config['centos']['release_name']
-release_short = config['centos']['release_short']
-release_version = config['centos']['release_version']
-file_name = config['centos']['name']
-product_id = config['marketplace']['product_id']
 architecture = platform.machine()
 amzn_architecture = architecture
 if architecture == 'aarch64':
     amzn_architecture = 'arm64'
 
 #todo: create a cli structure so that we can override the release version
-#DONE: Build the base_url using the content of the variables collected from the 
-base_url = f'https://cloud.centos.org/centos/{release_version}-stream/{amzn_architecture}/images/{file_name}-{release_version}-latest.{architecture}.raw.xz'
 
 def download_file(file_location: str)-> str:
     """
@@ -59,7 +37,7 @@ def download_file(file_location: str)-> str:
     file_name = file_location.split('/')[-1]
     urllib.request.urlretrieve(file_location, file_name)
     return file_name
-def run(release_version: str):
+def run(release_version: str, config_file=config_file):
     """
     This function is the main entry point for the script.
     It takes a release version as input and performs the following tasks:
@@ -71,6 +49,31 @@ def run(release_version: str):
     6. Register the image file as a new version of the AMI
 
     """
+
+    if config_file != f'{home_dir}/.config/centos_build_config.toml':
+        config = load_config(config_file)
+    else:
+        try:
+            config = load_config(f'{home_dir}/.centos_build_config.toml')
+        except FileNotFoundError:
+            config = load_config(f'{home_dir}/.config/centos_build_config.toml')
+        finally:
+            print("Error: could not load config file")
+            exit(1) 
+
+    REGION = config['app']['region']
+    PROFILE = config['app']['profile']
+    S3_BUCKET = config['marketplace']['s3_bucket']
+    S3_BUCKET_PREFIX = config['marketplace']['s3_bucket_prefix']
+    release_name = config['centos']['release_name']
+    release_short = config['centos']['release_short']
+    release_version = config['centos']['release_version']
+    file_name = config['centos']['name']
+    product_id = config['marketplace']['product_id']
+
+    #DONE: Build the base_url using the content of the variables collected from the 
+    base_url = f'https://cloud.centos.org/centos/{release_version}-stream/{amzn_architecture}/images/{file_name}-{release_version}-latest.{architecture}.raw.xz'
+
     #DONE: download the file from the url
     download_file(base_url)
     #DONE: uncompress the file if the file is compressed
@@ -165,8 +168,8 @@ def run(release_version: str):
 @click.command()
 @click.option('--release_version', default='latest', help='Specify the release version of CentOS Stream')
 @click.option('--config_file', default='~/.config/centos_build_config.toml', help='Specify the path to the config file')
-def cli(release_version):
-    run(release_version)
+def cli(release_version: str, config_file: str) -> None:
+    run(release_version, config_file)
 
 if __name__ == '__main__':
     cli()
