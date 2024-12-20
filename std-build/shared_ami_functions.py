@@ -14,7 +14,7 @@ def download_file(url: str) -> str:
                # and set chunk_size parameter to None.
                #if chunk: 
                f.write(chunk)
-    return local_filename
+   return local_filename
 
 def build_download_url(release_version: str, architecture: str, file_name: str) -> str:
     return f'https://cloud.centos.org/centos/{release_version}-stream/{architecture}/images/{file_name}-{release_version}-latest.{architecture}.raw.xz'
