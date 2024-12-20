@@ -109,5 +109,4 @@ def build_ami(release_version, config_file):
 @click.option('--config-file', default=f'{os.environ["HOME"]}/.config/centos_build_config.toml', help='Path to the config file')
  
 if __name__ == '__main__':
-    
     build_ami(release_version=release_version, config_file=config_file)
