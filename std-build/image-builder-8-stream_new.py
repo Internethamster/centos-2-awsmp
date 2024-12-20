@@ -6,7 +6,6 @@ import os
 import platform
 import click
 import datetime
-import requests
 import boto3
 import time
 from botocore.config import Config
@@ -107,6 +106,7 @@ def build_ami(release_version, config_file):
 @click.option('--release-version', default=None, help='Release Version of CentOS Stream')
 @click.option('--revision', default='0', help='incremented when building additional images on the same build date')
 @click.option('--config-file', default=f'{os.environ["HOME"]}/.config/centos_build_config.toml', help='Path to the config file')
- 
+
+
 if __name__ == '__main__':
     build_ami(release_version=release_version, config_file=config_file)
