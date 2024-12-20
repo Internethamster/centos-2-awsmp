@@ -1,17 +1,33 @@
 import os
-import boto3
 import toml
+import click
+import time
+import urllib.request
+import sslimport
+import click 
+import boto3
 from botocore.config import Config
 import platform
-import time
 
-#TODO: set the home directory for the user
-home_dir = os.path.expanduser('~')
+#TODO: create a function to set the configuration based on the config file
+def load_config(config_file: str) -> dict:
+    """
+    This function loads the configuration file and returns a dictionary with the configuration.
+    """
+    if not os.path.exists(config_file):
+        print(f"Error: {config_file} does not exist")
+        return {}
+    app_config = toml.load(open(config_file))
+    return app_config
 
+home_dir = os.path.expanduser('~') # need this for the conditional statements below. 
+
+if config_file != f'{home_dir}/.config/centos_build_config.toml':
+    config = load_config(config_file)
 try:
-    config = toml.load(open(f'{home_dir}/.centos_build_config.toml'))
+    config = load_config(f'{home_dir}/.centos_build_config.toml')
 except FileNotFoundError:
-    config = toml.load(open(f'{home_dir}/.config/centos_build_config.toml'))
+    config = load_config(f'{home_dir}/.config/centos_build_config.toml')
 finally:
     print("Error: could not load config file")
 
@@ -30,10 +46,19 @@ if architecture == 'aarch64':
     amzn_architecture = 'arm64'
 
 #todo: create a cli structure so that we can override the release version
-#TODO: Build the base_url
+#DONE: Build the base_url using the content of the variables collected from the 
 base_url = f'https://cloud.centos.org/centos/{release_version}-stream/{amzn_architecture}/images/{file_name}-{release_version}-latest.{architecture}.raw.xz'
+
 def download_file(file_location: str)-> str:
-def run(release_version):
+    """
+    This function downloads the file from the given URL and returns the name of the artifact downloaded. The file name is collected from the url
+    use the native python libraries to download the files, not the system commands. 
+    """
+    ssl._create_default_https_context = ssl._create_unverified_context
+    file_name = file_location.split('/')[-1]
+    urllib.request.urlretrieve(file_location, file_name)
+    return file_name
+def run(release_version: str):
     """
     This function is the main entry point for the script.
     It takes a release version as input and performs the following tasks:
@@ -128,4 +153,19 @@ def run(release_version):
     )
 
     if __name__ == '__main__':
+        #TODO: create a CLI to override the values found in the toml config file. Also, create a config file option to pass in an alternative config file. 
+
+        #TODO: use the click library to create the cli
+        #TODO: execute run with all of the content. 
         run(release_version)
+
+
+
+@click.command()
+@click.option('--release_version', default='latest', help='Specify the release version of CentOS Stream')
+@click.option('--config_file', default='~/.config/centos_build_config.toml', help='Specify the path to the config file')
+def cli(release_version):
+    run(release_version)
+
+if __name__ == '__main__':
+    cli()

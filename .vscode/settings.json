@@ -2,5 +2,6 @@
     "ansible.lightspeed.suggestions.enabled": true,
     "ansible.lightspeed.enabled": true,
     "redhat.telemetry.enabled": true,
-    "ansible.python.interpreterPath": "/home/ANT.AMAZON.COM/davdunc/.ansible_venv/bin/python3"
+    "ansible.python.interpreterPath": "/home/ANT.AMAZON.COM/davdunc/.ansible_venv/bin/python3",
+    "makefile.configureOnOpen": false
 }
