@@ -1,6 +1,7 @@
 [app]
 region = "us-east-1"
 profile = "default"
+dynamodb_table = "centosinawsmp"
 
 [centos]
 release_name = "CentOS-Cloud"
@@ -12,4 +13,5 @@ name = 'CentOS-Stream-ec2'
 [marketplace]
 s3_bucket = "aws-marketplace-upload-centos"
 s3_bucket_prefix  = "disk-images"
+s3_bucket_region = "us-west-2"
 productId = "a5911e94-1971-4697-9bc5-02904340f1df"
