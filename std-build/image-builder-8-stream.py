@@ -9,6 +9,9 @@ import boto3
 from botocore.config import Config
 import platform
 
+@click.command()
+@click.option('--release_version', default='8', help='Specify the release version of CentOS Stream')
+@click.option('--config_file', default='~/.config/centos_build_config.toml', help='Specify the path to the config file')
 #TODO: create a function to set the configuration based on the config file
 def load_config(config_file: str) -> dict:
     """
@@ -169,9 +172,6 @@ def cli(release_version: str, config_file: str) -> None:
     run(release_version, config_file)
 
 if __name__ == '__main__':
-    @click.command()
-    @click.option('--release_version', default='latest', help='Specify the release version of CentOS Stream')
-    @click.option('--config_file', default='~/.config/centos_build_config.toml', help='Specify the path to the config file')
     print(f'Running with release version: {release_version}')
     print(f'Running with config file: {config_file}')
     cli(release_version, config_file)
