@@ -17,11 +17,10 @@ def download_file(url: str) -> str:
    return local_filename
 
 def build_download_url(release_version: str, architecture: str, file_name: str) -> str:
-    return f'https://cloud.centos.org/centos/{release_version}-stream/{architecture}/images/{file_name}-{release_version}-latest.{architecture}.raw.xz'
+    return f'https://cloud.centos.org/centos/{release_version}-stream/{architecture}/images/{file_name}-ec2-{release_version}-latest.{architecture}.raw.xz'
 
-def build_ami_name(release_version: str, architecture: str, file_name: str) -> str:
-    return f'{file_name}-{release_version}-{build_date}.{architecture}'
-
+def build_ami_name(release_version: str = "8", architecture: str = 'x86_64', file_name: str = "CentOS-Stream", build_date: str = "20241224", revision: str = '0') -> str:
+    return f'{file_name}-{release_version}-{build_date}.{revision}.{architecture}'
 
 def load_config(config_file):
        # If the config_file is located, then we will use it, otherwise we will use the default config file
