@@ -14,7 +14,7 @@ aws ec2 modify-image-attribute \
     --attribute launchPermission \
     --operation-type add \
     --no-cli-pager \
-    --user-ids 679593333241 684062674729 425685993791 514427062609 014813956182
+    --user-ids 679593333241 684062674729 425685993791 514427062609 014813956182 264483973329
 
 aws ec2 describe-snapshots --no-cli-pager \
     --snapshot-ids $snapshotId \
@@ -25,7 +25,7 @@ aws ec2 describe-snapshots --no-cli-pager \
         --attribute createVolumePermission \
         --operation-type add \
         --no-cli-pager \
-        --user-ids 679593333241 684062674729 425685993791 514427062609 014813956182
+        --user-ids 679593333241 684062674729 425685993791 514427062609 014813956182 264483973329
 
 aws ec2 describe-snapshot-attribute \
     --no-cli-pager \
@@ -43,3 +43,4 @@ aws ec2 describe-image-attribute \
 # 684062674729 is the account for sharing to the aws marketplace
 # 679593333241 is the account for testing in the aws marketplace
 # 014813956182 is the account for testing in the Lightsail group
+# 264483973329 is the account for testing containers, but fails the AMI as well. 
