@@ -6,17 +6,17 @@ snapshotId=$(aws ec2 describe-images \
                  --region $REGION --owners self \
                  --image-ids $ImageId \
                  --query 'Images[].BlockDeviceMappings[].Ebs.SnapshotId' \
-                 --output text --no-cli-pager)
+                 --output text)
 
 aws ec2 modify-image-attribute \
     --image-id $ImageId  \
     --region $REGION \
     --attribute launchPermission \
     --operation-type add \
-    --no-cli-pager \
     --user-ids 679593333241 684062674729 425685993791 514427062609 014813956182 264483973329
 
-aws ec2 describe-snapshots --no-cli-pager \
+# If you can describe the snapshot, then modify the permissions. 
+aws ec2 describe-snapshots
     --snapshot-ids $snapshotId \
     --region $REGION && \
     aws ec2 modify-snapshot-attribute \
@@ -24,16 +24,13 @@ aws ec2 describe-snapshots --no-cli-pager \
         --region $REGION \
         --attribute createVolumePermission \
         --operation-type add \
-        --no-cli-pager \
         --user-ids 679593333241 684062674729 425685993791 514427062609 014813956182 264483973329
 
 aws ec2 describe-snapshot-attribute \
-    --no-cli-pager \
     --region $REGION \
     --attribute createVolumePermission \
     --snapshot-id $snapshotId 
 aws ec2 describe-image-attribute \
-    --no-cli-pager \
     --region $REGION \
     --attribute launchPermission \
     --image-id $ImageId
