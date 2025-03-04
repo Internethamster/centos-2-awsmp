@@ -12,11 +12,12 @@ import boto3
 import botocore
 import sys
 
-def parse_args():
+def go_parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--ami-id', required=True, help='AMI ID to share')
     parser.add_argument('--region', default='us-east-1', help='AWS region')
     parser.add_argument('--profile', default='default', help='AWS profile to use')
+    parser.add_argument('--accounts', nargs='+', default=[], help='List of accounts to share the AMI and snapshots to')
     return parser.parse_args()
 
 def get_aws_client(service, region, profile=None):
@@ -60,7 +61,7 @@ def share_snapshot(ec2_client, snapshot_id, accounts):
 
 def main():
 
-    args = parse_args()
+    args = go_parse_args()
     target_accounts = [
         '514427062609', '425685993791', '684062674729',
         '679593333241', '014813956182', '264483973329'
