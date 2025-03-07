@@ -34,3 +34,9 @@ ansible/s3_image_sync/*
 /centos-2-awsmp/file:cachedb?mode=memory&cache=shared
 /centos-2-awsmp/AWSMP-CPE_Load_Form-2023-01-10.ods
 *__pycache__
+std-build/argparse
+std-build/boto3
+std-build/botocore
+std-build/botocore.exceptions
+std-build/sys
+
