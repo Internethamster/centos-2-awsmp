@@ -1,0 +1,39 @@
+Resources:
+
+  # EC2 Instance Resource
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-03abc937db9ed3b47
+      InstanceType: t3.medium
+      KeyName: marketplace-tester
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            Encrypted: true
+            DeleteOnTermination: true
+            Iops: 3000
+            SnapshotId: snap-061e6e89660a5c6a4
+            VolumeSize: 10
+            VolumeType: gp3
+            Throughput: 125
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          GroupSet:
+            - sg-29006616
+      CreditSpecification:
+        CPUCredits: unlimited
+      Tags:
+        - Key: Name
+          Value: CS-9 Tester
+        - Key: distribution
+          Value: centos-stream
+        - Key: release
+          Value: "9"
+      MetadataOptions:
+        HttpTokens: required
+      PrivateDNSNameOptions:
+        HostnameType: ip-name
+        EnableResourceNameDnsARecord: true
+        EnableResourceNameDnsAAAARecord: false
