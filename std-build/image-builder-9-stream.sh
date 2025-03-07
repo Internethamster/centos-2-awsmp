@@ -1,190 +1,311 @@
 #!/bin/bash
-# CentOS-Stream-9 BUILDER
+# CENTOS-Stream-9 BUILDER
 
-# Set up a file that includes the content
 set -euo pipefail
 
-DRY_RUN="" # Dry run is handled on the command line with the "-d" command option
-
+# Configuration variables
+DRY_RUN=""
+export AWS_PAGER=""
+REGION=us-east-1
 S3_BUCKET="aws-marketplace-upload-centos"
 S3_PREFIX="disk-images"
 DATE=$(date +%Y%m%d)
-release_name="CentOS-Cloud"
-release_short="CentOS-Cloud"
-release_version='9'
-MAJOR_RELEASE=$release_version
 NAME="CentOS-Stream-ec2"
 ARCH=$(arch)
+MAJOR_RELEASE='9'
+VERSION=${VERSION:-"FIXME"}
+SNAPSHOT_STATUS_DIR="/tmp/snapshot_status"
+mkdir -p "$SNAPSHOT_STATUS_DIR"
 
-if [[ "$ARCH" == "aarch64" ]]; then
-    ARCHITECTURE="arm64"
-    CPE_RELEASE=0
-    CPE_RELEASE_DATE=20221219
-    CPE_RELEASE_REVISION=
-    ISOLATE="taskset -c 1"
-    QEMU_IMG="$ISOLATE qemu-img"
-    VIRT_CUSTOMIZE="$ISOLATE virt-customize"
-    VIRT_EDIT="$ISOLATE virt-edit"
-    VIRT_SYSPREP="$ISOLATE virt-sysprep"
+# Architecture-specific configurations
+declare -A ARCH_ARCHITECTURE
+declare -A ARCH_INSTANCE_TYPE
+declare -A ARCH_TASKSET
 
-    INSTANCE_TYPE="m6g.large"
+# aarch64 configurations
+ARCH_ARCHITECTURE[aarch64]="arm64"
+ARCH_INSTANCE_TYPE[aarch64]="m6g.large"
+ARCH_TASKSET[aarch64]="taskset -c 1"
+
+# x86_64 configurations
+ARCH_ARCHITECTURE[x86_64]="x86_64"
+ARCH_INSTANCE_TYPE[x86_64]="m6i.large"
+ARCH_TASKSET[x86_64]=""
+
+# Set architecture-specific variables
+if [[ -n "${ARCH_ARCHITECTURE[$ARCH]}" ]]; then
+    ARCHITECTURE=${ARCH_ARCHITECTURE[$ARCH]}
+    INSTANCE_TYPE=${ARCH_INSTANCE_TYPE[$ARCH]}
+    TASKSET_PREFIX=${ARCH_TASKSET[$ARCH]}
 else
-    ARCHITECTURE="$(arch)"
-    CPE_RELEASE=0
-    CPE_RELEASE_DATE=20221219
-    CPE_RELEASE_REVISION=
-
-    QEMU_IMG="qemu-img"
-    VIRT_CUSTOMIZE="virt-customize"
-    VIRT_EDIT="virt-edit"
-    VIRT_SYSPREP="virt-sysprep"
-
-    INSTANCE_TYPE="m6i.large"
+    echo "Unsupported architecture: $ARCH"
+    exit 1
 fi
 
+# Update CPE Release information for Stream 9
+CPE_RELEASE=0
+CPE_RELEASE_DATE=20250203
+CPE_RELEASE_REVISION=""
+
+# Configure virtualization tools
+QEMU_IMG="${TASKSET_PREFIX} qemu-img"
+VIRT_CUSTOMIZE="${TASKSET_PREFIX} virt-customize"
+VIRT_EDIT="${TASKSET_PREFIX} virt-edit"
+VIRT_SYSPREP="${TASKSET_PREFIX} virt-sysprep"
+
+# Source shared functions
 source ${0%/*}/shared_functions.sh
 
-# Shared functions should set the region env var or we are in the wrong enviornment.
-if [[ -z $REGION ]]
-then
-    exit_abnormal
+# Version handling
+if [ "$VERSION" == "FIXME" ]; then
+    VERSION_FILE="${NAME}-${MAJOR_RELEASE}-${DATE}.txt"
+    SUCCESS_FILE="${VERSION_FILE}.success"
+    
+    [ ! -e "$VERSION_FILE" ] && echo "1" > "$VERSION_FILE"  # Start at 1 for Stream 9
+    VERSION=$(cat "$VERSION_FILE")
+    
+    # If last run was successful, increment version
+    if [ -f "$SUCCESS_FILE" ]; then
+        VERSION=$((VERSION + 1))
+        echo "$VERSION" > "$VERSION_FILE"
+        rm "$SUCCESS_FILE"
+    fi
 fi
 
-if [ ! -e ${NAME}-${DATE}.txt ]; then
-    echo "0" > ${NAME}-${DATE}.txt
-fi
+# Define image names and URLs
+BASE_URL="https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images"
+IMAGE_FILE="${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}"
+IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}-${DATE}.${VERSION}.${ARCH}"
+LINK="${BASE_URL}/${IMAGE_FILE}.raw"
 
-if [ "$VERSION" == "FIXME" ]
-then
-    VERSION=
-    echo $(( $(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt) + 1 )) > ${NAME}-${MAJOR_RELEASE}-${DATE}.txt
-    VERSION=$(cat ${NAME}-${MAJOR_RELEASE}-${DATE}.txt)
-fi
-
-IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${DATE}.${VERSION}.${ARCH}"
-err "IMAGE NAME: ${IMAGE_NAME}"
-# Move from qcow2 to Raw images is importantm
-FILE="${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}.${ARCH}"
-
-LINK="https://cloud.centos.org/centos/${MAJOR_RELEASE}-stream/${ARCH}/images/${FILE}"
-
+# Get AWS resource IDs
 S3_REGION=$(get_s3_bucket_location $S3_BUCKET)
-
 SUBNET_ID=$(get_default_vpc_subnet $S3_REGION)
-
 SECURITY_GROUP_ID=$(get_default_sg_for_vpc $S3_REGION)
 
-IMAGE_NAME="${NAME}-${MAJOR_RELEASE}-${CPE_RELEASE_DATE}.${CPE_RELEASE}-${DATE}.${VERSION}.${ARCH}"
-
-# identify the file type in order of preference. It's possible that multiples exist,
-#   but Ideally we want compressed over uncompressed, then raw type over qcow2 and
-#   qcow2 over qcow... Anything else needs intervention
-FILE_FOUND="None"
-
-for FILE_TYPE in raw qcow2 qcow
-do
-
-    if [[ $(curl -Is ${LINK}.${FILE_TYPE}.xz | awk '/HTTP/ { print $2 }') == 200 ]] # Prefer the compressed file
-    then
-        err "${LINK}.${FILE_TYPE}.xz to be retrieved and saved at ./${FILE}.${FILE_TYPE}.xz"
-        FILE=${FILE}.${FILE_TYPE}
-        FILE_STATE="COMPRESSED"
-        FILE_FOUND=${FILE_TYPE}
-        curl -C - -o ${FILE}.xz ${LINK}.${FILE_TYPE}.xz
-    elif [[ $(curl -Is ${LINK}.${FILE_TYPE} | awk '/HTTP/ { print $2 }') == 200 ]]
-    then
-        err "${LINK}.${FILE_TYPE} to be retrieved and saved at ./${FILE}.${FILE_TYPE}"
-        FILE_STATE="NORMAL"
-        FILE=${FILE}.${FILE_TYPE}
-        FILE_FOUND=$FILE_TYPE
-        curl -C - -o ${FILE} ${LINK}.${FILE_TYPE}
-    else
-        continue
+cleanup() {
+    local exit_code=$?
+    err "Cleaning up temporary files..."
+    
+    # Remove raw image files
+    if [[ -f "${IMAGE_FILE}.raw" ]]; then
+        err "Removing ${IMAGE_FILE}.raw"
+        rm -f "${IMAGE_FILE}.raw"
     fi
-    [[ "$FILE_FOUND" != "None" ]] && err "File type of $FILE_FOUND located."
-    [[ "$FILE_FOUND" != "None" ]] && break
-done
-[[ "$FILE_FOUND" == "None" ]] && err "ERROR: 404 File not found. Exiting!"
+    
+    if [[ -f "${IMAGE_NAME}.raw" ]]; then
+        err "Removing ${IMAGE_NAME}.raw"
+        rm -f "${IMAGE_NAME}.raw"
+    fi
+    
+    # Remove compressed files
+    if [[ -f "${IMAGE_FILE}.raw.xz" ]]; then
+        err "Removing ${IMAGE_FILE}.raw.xz"
+        rm -f "${IMAGE_FILE}.raw.xz"
+    fi
+    
+    err "Cleanup completed (version file preserved)"
+    exit $exit_code
+}
 
-if [[ "$FILE_STATE" == "COMPRESSED" ]]
-   then
-       err "xz -d ${FILE}.xz"
-       xz -d --force ${FILE}.xz && FILE_STATE="NORMAL"
-fi
-err "${LINK}.${FILE_FOUND} retrieved and saved at $(pwd)/${FILE}"
+verify_url() {
+    err "Attempting to verify URLs:"
+    err "Checking: ${LINK}.xz"
+    
+    local curl_output=$(curl -ILs "${LINK}.xz" -w "%{http_code}")
+    err "Curl output: ${curl_output}"
+    
+    err "Listing available files in directory:"
+    curl -s "${BASE_URL}/" | grep "${NAME}-${MAJOR_RELEASE}"
 
-if [[ "$FILE_FOUND" != "raw" ]]
-then
-    ${QEMU_IMG} convert $(pwd)/${FILE} ${IMAGE_NAME}.raw && rm -f ${FILE}
-    err "${IMAGE_NAME}.raw created from ${FILE}"
-else
-    mv $(pwd)/${FILE} ${IMAGE_NAME}.raw
-fi
-${VIRT_EDIT} -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
-err "Modified ./${IMAGE_NAME}.raw to make it permissive"
+    err "Constructed image name: ${IMAGE_NAME}"
+    err "Constructed URL: ${LINK}"
+    err "Using architecture: ${ARCH}"
+    err "Using major release: ${MAJOR_RELEASE}"
+    err "Using CPE release date: ${CPE_RELEASE_DATE}"
+    err "Using CPE release: ${CPE_RELEASE}"
+}
 
-${VIRT_CUSTOMIZE} -a ./${IMAGE_NAME}.raw  --update
-err "${VIRT_CUSTOMIZE} -a ./${IMAGE_NAME}.raw  --update"
+download_image() {
+    local file_path="${IMAGE_FILE}.raw"
+    
+    err "Attempting to download: ${LINK}.xz"
+    if curl -Is "${LINK}.xz" | grep -q "HTTP/.*200"; then
+        err "Found compressed raw image at: ${LINK}.xz"
+        curl -C - -o "${file_path}.xz" "${LINK}.xz"
+        err "Decompressing image..."
+        xz -d --force "${file_path}.xz"
+        
+        err "Files after decompression:"
+        ls -l
 
-${VIRT_CUSTOMIZE} -a ./${IMAGE_NAME}.raw --selinux-relabel
-err "${VIRT_CUSTOMIZE} -a ./${IMAGE_NAME}.raw --selinux-relabel"
+        err "Renaming ${file_path} to ${IMAGE_NAME}.raw"
+        mv "${file_path}" "${IMAGE_NAME}.raw"
+        
+        err "Files after rename:"
+        ls -l
+        
+        if [[ ! -f "${IMAGE_NAME}.raw" ]]; then
+            err "Error: Failed to create ${IMAGE_NAME}.raw"
+            exit 1
+        fi
+    else
+        err "Failed to find image at: ${LINK}.xz"
+        err "Please verify the following:"
+        err "1. Base URL: ${BASE_URL}"
+        err "2. Image file: ${IMAGE_FILE}"
+        err "3. Full URL: ${LINK}.xz"
+        exit 1
+    fi
+}
 
-${VIRT_EDIT} -a ./${IMAGE_NAME}.raw /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1enforcing/"
-err "Modified ./${IMAGE_NAME}.raw to make it enforcing"
+process_image() {
+    local raw_image="${IMAGE_NAME}.raw"
+    
+    if [[ ! -f "${raw_image}" ]]; then
+        err "Error: Raw image file ${raw_image} not found!"
+        err "Current directory contents:"
+        ls -l
+        exit 1
+    fi
+    
+    err "Configuring SELinux and updating system..."
+      ${VIRT_EDIT} -a "${raw_image}" /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1permissive/"
+    ${VIRT_EDIT} -a "${raw_image}" /etc/cloud/cloud.cfg -e 's/name: centos/name: ec2-user/'
+    err "Modifying CentOS repository configuration..."
+    # Stream 9 specific repository modifications if needed
+    ${VIRT_CUSTOMIZE} -a "${raw_image}" --update
+    ${VIRT_CUSTOMIZE} -a "${raw_image}" --selinux-relabel
+    ${VIRT_EDIT} -a "${raw_image}" /etc/sysconfig/selinux -e "s/^\(SELINUX=\).*/\1enforcing/"
+    ${VIRT_SYSPREP} -a "${raw_image}"
+}
 
-${VIRT_SYSPREP} -a ./${IMAGE_NAME}.raw
-err "upgrading the current packages for the instance: ${IMAGE_NAME}"
+aws_import_and_share() {
+    local raw_image="${IMAGE_NAME}.raw"
+    local import_status_file="${SNAPSHOT_STATUS_DIR}/${IMAGE_NAME}.import"
+    local copy_status_file="${SNAPSHOT_STATUS_DIR}/${IMAGE_NAME}.copy"
 
-err "Cleaned up the volume in preparation for the AWS Marketplace"
+    err "Uploading image to S3..."
+    aws --region $S3_REGION s3 cp ./${raw_image} s3://${S3_BUCKET}/${S3_PREFIX}/
+    DISK_CONTAINER="{\"Description\":\"${IMAGE_NAME}\",\"Format\":\"raw\",\"UserBucket\":{\"S3Bucket\":\"${S3_BUCKET}\",\"S3Key\":\"${S3_PREFIX}/${raw_image}\"}}"
+    
+    err "Importing snapshot..."
+    IMPORT_SNAP=$(aws ec2 import-snapshot ${DRY_RUN} --region $S3_REGION \
+        --client-token ${IMAGE_NAME}-$(date +%s) \
+        --description "Import Base $NAME $MAJOR_RELEASE ($ARCH) Image" \
+        --disk-container "$DISK_CONTAINER")
+    
+    snapshotTask=$(echo $IMPORT_SNAP | jq -Mr '.ImportTaskId')
+    err "Snapshot import task ID: ${snapshotTask}"
+    
+    err "Waiting for snapshot import to complete..."
+    while true; do
+        status=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks \
+            --import-task-ids ${snapshotTask} \
+            --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' \
+            --output text)
+            
+        err "Current import status: $status"
+        
+        case $status in
+            completed)
+                snapshotId=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks \
+                    --import-task-ids ${snapshotTask} \
+                    --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' \
+                    --output text)
+                echo "$snapshotId" > "$import_status_file"
+                break
+                ;;
+            active)
+                sleep 30
+                ;;
+            error|deleted|cancelled)
+                err "Import failed with status: $status"
+                error_message=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks \
+                    --import-task-ids ${snapshotTask} \
+                    --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.StatusMessage' \
+                    --output text)
+                err "Error message: $error_message"
+                exit 1
+                ;;
+        esac
+    done
 
-aws --region $S3_REGION s3 cp ./${IMAGE_NAME}.raw  s3://${S3_BUCKET}/${S3_PREFIX}/
-err "Upload ${IMAGE_NAME}.raw image to S3://${S3_BUCKET}/${S3_PREFIX}/"
-rm ${IMAGE_NAME}.raw
+    if [[ "$S3_REGION" == "us-east-1" ]]; then
+        err "Snapshot already in us-east-1, no copy needed..."
+        IAD_snap=$snapshotId
+        echo "$IAD_snap" > "$copy_status_file"
+    else
+        err "Processing snapshot copy to us-east-1..."
+        copy_response=$(aws ec2 copy-snapshot \
+            --source-region "$S3_REGION" \
+            --source-snapshot-id "$snapshotId" \
+            --destination-region "us-east-1" \
+            --description "Copy of $IMAGE_NAME snapshot" \
+            --output json)
+        
+        IAD_snap=$(echo "$copy_response" | jq -r '.SnapshotId')
+        err "Started copy of snapshot. New snapshot ID: $IAD_snap"
+        
+        err "Waiting for snapshot copy to complete..."
+        while true; do
+            copy_status=$(aws ec2 describe-snapshots \
+                --snapshot-ids "$IAD_snap" \
+                --region us-east-1 \
+                --query 'Snapshots[0].State' \
+                --output text 2>/dev/null || echo "pending")
+                
+            err "Current copy status: $copy_status"
+            
+            case $copy_status in
+                completed)
+                    echo "$IAD_snap" > "$copy_status_file"
+                    break
+                    ;;
+                pending)
+                    sleep 30
+                    ;;
+                error)
+                    err "Snapshot copy failed"
+                    exit 1
+                    ;;
+            esac
+        done
+    fi
 
-DISK_CONTAINER="Description=${IMAGE_NAME},Format=raw,UserBucket={S3Bucket=${S3_BUCKET},S3Key=${S3_PREFIX}/${IMAGE_NAME}.raw}"
+    DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTermination\":true, \"SnapshotId\":\"${IAD_snap}\", \"VolumeSize\":10, \"VolumeType\":\"gp3\"}}]"
+    
+    ImageId=$(aws ec2 --region us-east-1 register-image \
+        --architecture=$ARCHITECTURE \
+        --description="${NAME} ${MAJOR_RELEASE} ($ARCH) for HVM Instances" \
+        --virtualization-type hvm \
+        --root-device-name '/dev/sda1' \
+        --name=${IMAGE_NAME} \
+        --ena-support --sriov-net-support simple \
+        --block-device-mappings "${DEVICE_MAPPINGS}" \
+        --boot-mode uefi-preferred \
+        --imds-support 'v2.0' \
+        --output text)
+    
+    err "Created Image ID: $ImageId in us-east-1"
+    echo "SNAPSHOT : ${IAD_snap}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MAJOR_RELEASE}.txt
+    
+    aws ec2 run-instances --region us-east-1 \
+        --subnet-id $SUBNET_ID \
+        --image-id $ImageId \
+        --instance-type ${INSTANCE_TYPE} \
+        --key-name "previous" \
+        --security-group-ids $SECURITY_GROUP_ID ${DRY_RUN}
+    
+    ${0%/*}/share-amis.sh $ImageId
+    touch "$SUCCESS_FILE"
+}
 
-IMPORT_SNAP=$(aws ec2 import-snapshot ${DRY_RUN} --region $S3_REGION --client-token ${IMAGE_NAME}-$(date +%s) --description "Import Base $NAME $MAJOR_RELEASE ($ARCH) Image" --disk-container $DISK_CONTAINER) &&\
-    err "snapshot suceessfully imported to $IMPORT_SNAP"
+# Set up the trap
+trap cleanup EXIT ERR SIGINT SIGTERM
 
-snapshotTask=$(echo $IMPORT_SNAP | jq -Mr '.ImportTaskId')
-
-while [[ "$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks ${DRY_RUN} --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.Status' --output text)" == "active" ]]
-do
-    aws ec2 --region $S3_REGION describe-import-snapshot-tasks ${DRY_RUN} --import-task-ids $snapshotTask
-    err "import snapshot is still active."
-    sleep 60
-done
-err "Import snapshot task is complete"
-
-snapshotId=$(aws ec2 --region $S3_REGION describe-import-snapshot-tasks ${DRY_RUN} --import-task-ids ${snapshotTask} --query 'ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId' --output text)
-err "Created snapshot: $snapshotId"
-
-sleep 20
-IAD_snap=copySnapshotToRegion()
-err "Created $IAD_snap in us-east-1"
-DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sda1\", \"Ebs\": {\"DeleteOnTermination\":true, \"SnapshotId\":\"${IAD_snap}\", \"VolumeSize\":10, \"VolumeType\":\"gp2\"}}]"
-
-err $DEVICE_MAPPINGS
-
-ImageId=$(aws ec2 --region us-east-1 register-image ${DRY_RUN} --architecture=${ARCHITECTURE} \
-              --description="${NAME}-${MAJOR_RELEASE} (${ARCHITECTURE}) for HVM Instances" \
-              --virtualization-type hvm  \
-              --root-device-name '/dev/sda1' \
-              --name=${IMAGE_NAME} \
-              --ena-support --sriov-net-support simple \
-              --block-device-mappings "${DEVICE_MAPPINGS}" \
-              --boot-mode uefi-preferred \
-              --imds-support 'v2.0' \
-              --output text)
-
-err "Produced Image ID $ImageId in us-east-1"
-echo "SNAPSHOT : ${IAD_snap}, IMAGEID : ${ImageId}, NAME : ${IMAGE_NAME}" >> ${NAME}-${MAJOR_RELEASE}.txt
-
-err "aws ec2 run-instances ${DRY_RUN} --region $S3_REGION --subnet-id $SUBNET_ID --image-id $ImageId --instance-type c5n.large --key-name \"davdunc@amazon.com\" --security-group-ids $SECURITY_GROUP_ID"
-aws ec2 run-instances ${DRY_RUN} --region us-east-1 --subnet-id $SUBNET_ID \
-    --image-id $ImageId --instance-type ${INSTANCE_TYPE} --key-name "previous" \
-    --security-group-ids $SECURITY_GROUP_ID
-
-# Share AMI with AWS Marketplace
-# err "./share-amis.sh $snapshotId $ImageId"
-# ./share-amis.sh $snapshotId $ImageId
+# Main execution
+verify_url
+download_image
+process_image
+aws_import_and_share
